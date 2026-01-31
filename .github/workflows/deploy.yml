@@ -12,10 +12,6 @@ env:
   SERVICE_NAME: video-saas-frontend
   WORKLOAD_IDENTITY_PROVIDER: projects/922541531212/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: github-actions-sa@gen-lang-client-0104807788.iam.gserviceaccount.com
-  TF_VAR_project_id: gen-lang-client-0104807788
-  TF_VAR_kie_api_key: ${{ secrets.KIE_API_KEY }}
-  TF_VAR_cloudflare_api_key: ${{ secrets.CLOUDFLARE_API_KEY }}
-  TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
 
 jobs:
   deploy:
@@ -41,19 +37,6 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker
 
-      # Deploy Cloud Functions via Terraform
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        working-directory: ./terraform
-        run: terraform init
-
-      - name: Terraform Apply
-        working-directory: ./terraform
-        run: terraform apply -auto-approve
-
-      # Build and Deploy Frontend
       - name: Build and Push
         run: |
           docker build \
