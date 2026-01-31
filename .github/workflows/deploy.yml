@@ -10,22 +10,24 @@ env:
   PROJECT_ID: gen-lang-client-0104807788
   REGION: us-central1
   SERVICE_NAME: video-saas-frontend
-  # WORKLOAD_IDENTITY_PROVIDER form: projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER
   WORKLOAD_IDENTITY_PROVIDER: projects/922541531212/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: github-actions-sa@gen-lang-client-0104807788.iam.gserviceaccount.com
+  TF_VAR_project_id: gen-lang-client-0104807788
+  TF_VAR_kie_api_key: ${{ secrets.KIE_API_KEY }}
+  TF_VAR_cloudflare_api_key: ${{ secrets.CLOUDFLARE_API_KEY }}
+  TF_VAR_cloudflare_zone_id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: "read"
-      id-token: "write" # Required for OIDC
+      id-token: "write"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Converge to Google Auth
       - name: Google Auth
         id: auth
         uses: google-github-actions/auth@v2
@@ -33,25 +35,37 @@ jobs:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
 
-      # Setup gcloud CLI
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
         run: gcloud auth configure-docker
 
+      # Deploy Cloud Functions via Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ./terraform
+        run: terraform apply -auto-approve
+
+      # Build and Deploy Frontend
       - name: Build and Push
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="${{ secrets.FIREBASE_API_KEY }}" \
-            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyCpuuD51EkkiGIpr57FT_RqikO6Bdplrec" \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="gen-lang-client-0104807788.firebaseapp.com" \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID="gen-lang-client-0104807788" \
             -t gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }} \
             -t gcr.io/${{ env.PROJECT_ID }}/video-saas:latest \
             .
           docker push gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }}
           docker push gcr.io/${{ env.PROJECT_ID }}/video-saas:latest
 
-      # Deploy to Cloud Run
       - name: Deploy to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
