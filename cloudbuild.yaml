@@ -1,0 +1,14 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "--no-cache"
+      - "-t"
+      - "gcr.io/gen-lang-client-0104807788/video-saas:latest"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDl7vQune1s_PZNORZ2Q9hNmHo9VzXiAtU"
+      - "--build-arg"
+      - "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=kiesaas.firebaseapp.com"
+      - "."
+images:
+  - "gcr.io/gen-lang-client-0104807788/video-saas:latest"
