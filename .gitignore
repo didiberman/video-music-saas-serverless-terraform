@@ -45,4 +45,7 @@ terraform/*.tfstate.*
 terraform/terraform.tfvars
 terraform/.terraform.lock.hcl
 terraform/.terraform.tfstate.lock.info
-terraform/dist/start-generation.zip
+terraform/dist/
+
+# Cloud Functions
+functions/*/node_modules

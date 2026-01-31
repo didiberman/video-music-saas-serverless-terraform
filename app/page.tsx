@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
-import { Sparkles, History, LogOut } from "lucide-react";
+import { Sparkles, History, LogOut, Clock, Timer } from "lucide-react";
 import { motion } from "framer-motion";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
+  const [duration, setDuration] = useState<"6" | "10">("6");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -50,7 +51,7 @@ export default function Home() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, duration }),
       });
 
       const data = await res.json();
@@ -143,8 +144,32 @@ export default function Home() {
           />
 
           <div className="flex justify-between items-center px-6 pb-4 border-t border-white/5 pt-4">
-            <div className="text-xs text-white/30 uppercase tracking-wider">
-              30s Generator
+            <div className="flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-white/30" />
+              <div className="flex rounded-lg overflow-hidden border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setDuration("6")}
+                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                    duration === "6"
+                      ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
+                      : "text-white/30 hover:text-white/50 border-r border-white/10"
+                  }`}
+                >
+                  6s
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDuration("10")}
+                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                    duration === "10"
+                      ? "bg-violet-500/20 text-violet-300"
+                      : "text-white/30 hover:text-white/50"
+                  }`}
+                >
+                  10s
+                </button>
+              </div>
             </div>
             <button
               onClick={handleGenerate}

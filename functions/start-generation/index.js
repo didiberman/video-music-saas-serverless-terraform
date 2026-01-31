@@ -1,13 +1,17 @@
 const functions = require('@google-cloud/functions-framework');
 const admin = require('firebase-admin');
+const { Firestore } = require('@google-cloud/firestore');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// Initialize Firebase Admin (Cross-Project Credentials)
+// Initialize Firebase Admin with kiesaas credentials (for auth token verification only)
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
-const db = admin.firestore();
+
+// Use a separate Firestore client that uses the default credentials
+// of the Cloud Function's own project (gen-lang-client-0104807788)
+const db = new Firestore();
 
 const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.WEBHOOK_URL;
@@ -41,8 +45,10 @@ functions.http('startGeneration', async (req, res) => {
         const uid = decodedToken.uid;
 
         // 2. Parse Body
-        const { prompt } = req.body;
+        const { prompt, duration } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
+        const videoDuration = duration === '10' ? '10' : '6';
+        const creditCost = parseInt(videoDuration);
 
         // 3. Check Credits in Firestore
         const creditsRef = db.collection('credits').doc(uid);
@@ -67,10 +73,10 @@ functions.http('startGeneration', async (req, res) => {
         const model = 'gemini-1.5-flash-001';
         const generativeModel = vertex_ai.preview.getGenerativeModel({ model: model });
 
-        const scriptPrompt = `You are a professional video scriptwriter. 
-        Create a concise, engaging video script (approx 30-45 seconds) based on the following user idea: "${prompt}".
-        
-        The script should be visual and ready for video generation. 
+        const scriptPrompt = `You are a professional video scriptwriter.
+        Create a concise, engaging video script (approx 6-10 seconds) based on the following user idea: "${prompt}".
+
+        The script should be visual and ready for video generation.
         Return ONLY the script text, no introductory or concluding remarks.`;
 
         const streamingResp = await generativeModel.generateContentStream(scriptPrompt);
@@ -86,46 +92,49 @@ functions.http('startGeneration', async (req, res) => {
 
         console.log("Generated Script:", generatedScript);
 
-        // 5. Call KIE AI with the Generated Script
-        const kieRes = await fetch('https://api.kie.ai/v1/videos/generate', {
+        // 5. Call KIE AI Image-to-Video API with the Generated Script
+        const kieRes = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${kieApiKey}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                prompt: generatedScript, // Use the script from Gemini
-                model: "k-2.0",
-                callback_url: webhookUrl,
-                aspect_ratio: "16:9"
+                model: "grok-imagine/image-to-video",
+                input: {
+                    prompt: generatedScript,
+                    mode: "normal",
+                    duration: videoDuration
+                },
+                callBackUrl: webhookUrl
             }),
         });
 
-        if (!kieRes.ok) {
-            const errText = await kieRes.text();
-            throw new Error(`KIE AI Error: ${errText}`);
-        }
-
         const kieData = await kieRes.json();
 
+        if (kieData.code !== 200) {
+            throw new Error(`KIE AI Error: ${kieData.msg || JSON.stringify(kieData)}`);
+        }
+
+        const taskId = kieData.data.taskId;
+
         // 6. Store in Firestore ("generations" collection)
-        // Storing both the original idea and the generated script for reference
-        await db.collection('generations').doc(kieData.id).set({
+        await db.collection('generations').doc(taskId).set({
             user_id: uid,
             original_prompt: prompt,
-            generated_script: generatedScript, // Save the script
-            status: 'pending',
-            kie_id: kieData.id,
+            generated_script: generatedScript,
+            status: 'waiting',
+            kie_task_id: taskId,
             created_at: new Date()
         });
 
         // 7. Deduct Credits
         await creditsRef.update({
-            seconds_remaining: secondsRemaining - 5,
+            seconds_remaining: secondsRemaining - creditCost,
             updated_at: new Date()
         });
 
-        return res.status(200).json({ success: true, id: kieData.id });
+        return res.status(200).json({ success: true, id: taskId });
 
     } catch (error) {
         console.error('Error:', error);

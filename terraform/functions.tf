@@ -9,6 +9,7 @@ data "archive_file" "start_generation_zip" {
   type        = "zip"
   source_dir  = "../functions/start-generation"
   output_path = "./dist/start-generation.zip"
+  excludes    = ["node_modules"]
 }
 
 resource "google_storage_bucket_object" "start_generation_obj" {
@@ -52,6 +53,7 @@ data "archive_file" "webhook_handler_zip" {
   type        = "zip"
   source_dir  = "../functions/webhook-handler"
   output_path = "./dist/webhook-handler.zip"
+  excludes    = ["node_modules"]
 }
 
 resource "google_storage_bucket_object" "webhook_handler_obj" {
