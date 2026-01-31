@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
 import { Sparkles, History, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { auth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
@@ -15,10 +15,15 @@ export default function Home() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
+  const firebaseAuth = useMemo(() => getFirebaseAuth(), []);
 
   // Handle Auth State
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (!firebaseAuth) {
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
       if (!currentUser) {
         router.push("/login");
       } else {
@@ -26,7 +31,7 @@ export default function Home() {
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [firebaseAuth, router]);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !user) return;
@@ -66,7 +71,11 @@ export default function Home() {
   };
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    if (!firebaseAuth) {
+      return;
+    }
+
+    await signOut(firebaseAuth);
     router.push("/login");
   };
 

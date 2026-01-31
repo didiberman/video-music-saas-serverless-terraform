@@ -5,7 +5,7 @@
 resource "cloudflare_record" "saas_frontend" {
   zone_id = local.cloudflare_zone_id
   name    = "saas" # saas.didiberman.com
-  value   = replace(google_cloud_run_v2_service.frontend.uri, "https://", "")
+  content = google_cloud_run_domain_mapping.frontend.status[0].resource_records[0].rrdata
   type    = "CNAME"
-  proxied = true
+  proxied = false # leave DNS-only so Google can verify/issue the managed cert
 }

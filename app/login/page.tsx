@@ -3,21 +3,28 @@
 import { GlassCard } from "@/components/GlassCard";
 import { Sparkles, Youtube } from "lucide-react";
 import { motion } from "framer-motion";
-import { auth, googleProvider } from "@/lib/firebase/client";
+import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase/client";
 import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function LoginPage() {
     const router = useRouter();
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const firebaseAuth = useMemo(() => getFirebaseAuth(), []);
+    const provider = useMemo(() => getGoogleProvider(), []);
 
     const handleGoogleLogin = async () => {
+        if (!firebaseAuth || !provider) {
+            setError("Authentication is unavailable. Please verify environment configuration.");
+            return;
+        }
+
         setLoading(true);
         setError("");
         try {
-            await signInWithPopup(auth, googleProvider);
+            await signInWithPopup(firebaseAuth, provider);
             router.push("/");
         } catch (e: any) {
             console.error(e);
