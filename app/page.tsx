@@ -82,31 +82,43 @@ export default function Home() {
   if (!user) return null; // Or a loading spinner
 
   return (
-    <main className="min-h-screen w-full bg-black relative overflow-hidden selection:bg-white/20 flex flex-col items-center justify-center p-6">
+    <main className="min-h-screen w-full bg-black relative overflow-hidden selection:bg-violet-500/20 flex flex-col items-center justify-center p-6">
 
-      {/* Background Elements */}
-      <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
+      {/* Animated gradient orbs */}
+      <div className="orb orb-1" style={{ top: '-15%', left: '10%' }} />
+      <div className="orb orb-2" style={{ bottom: '10%', right: '-5%' }} />
+      <div className="orb orb-3" style={{ top: '50%', left: '-10%' }} />
+      <div className="orb orb-4" style={{ top: '-5%', right: '15%' }} />
+
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.02]"
+        style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }}
+      />
 
       {/* Header / Nav */}
       <header className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white/50" />
+            <Sparkles className="w-4 h-4 text-violet-400" />
           </div>
-          <span className="text-sm font-medium text-white/50 tracking-widest uppercase">Video Zen</span>
+          <span className="text-sm font-medium tracking-widest uppercase gradient-text">Video Zen</span>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="p-2 rounded-full hover:bg-white/5 transition-colors text-white/60 hover:text-white"
+            className="p-2.5 rounded-xl hover:bg-white/5 transition-all text-white/50 hover:text-violet-300"
             title="Your Vault"
           >
             <History className="w-5 h-5" />
           </button>
           <button
             onClick={handleSignOut}
-            className="p-2 rounded-full hover:bg-white/5 transition-colors text-white/60 hover:text-white"
+            className="p-2.5 rounded-xl hover:bg-white/5 transition-all text-white/50 hover:text-pink-300"
             title="Sign Out"
           >
             <LogOut className="w-5 h-5" />
@@ -115,7 +127,7 @@ export default function Home() {
       </header>
 
       {/* Main Creation Interface */}
-      <GlassCard className="w-full max-w-2xl relative z-10 p-1" delay={0.2}>
+      <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0.2}>
         <div className="relative">
           <textarea
             value={prompt}
@@ -132,11 +144,11 @@ export default function Home() {
             <button
               onClick={handleGenerate}
               disabled={!prompt.trim() || isGenerating}
-              className="h-10 px-6 rounded-full bg-white text-black font-medium hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-violet-500/20"
             >
               {isGenerating ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   <span>Dreaming...</span>
                 </>
               ) : (
@@ -155,7 +167,7 @@ export default function Home() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
-        className="absolute bottom-8 text-white/20 text-xs font-light tracking-[0.2em] uppercase"
+        className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
       >
         Powered by KIE AI
       </motion.p>
