@@ -89,6 +89,11 @@ export default function Home() {
       <div className="orb orb-2" style={{ bottom: '10%', right: '-5%' }} />
       <div className="orb orb-3" style={{ top: '50%', left: '-10%' }} />
       <div className="orb orb-4" style={{ top: '-5%', right: '15%' }} />
+      <div className="orb orb-5" style={{ bottom: '-10%', right: '30%' }} />
+      <div className="orb orb-6" style={{ top: '30%', right: '-8%' }} />
+
+      {/* Aurora band */}
+      <div className="aurora-band" />
 
       {/* Subtle grid overlay */}
       <div

@@ -37,21 +37,35 @@ body {
 }
 
 /* Animated gradient orbs */
-@keyframes float-slow {
+@keyframes float-1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -40px) scale(1.05); }
-  66% { transform: translate(-20px, 20px) scale(0.95); }
+  25% { transform: translate(60px, -50px) scale(1.08); }
+  50% { transform: translate(20px, 40px) scale(0.95); }
+  75% { transform: translate(-40px, -20px) scale(1.03); }
 }
 
-@keyframes float-slower {
+@keyframes float-2 {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(-40px, 30px) scale(1.1); }
-  66% { transform: translate(25px, -15px) scale(0.9); }
+  25% { transform: translate(-50px, 40px) scale(1.1); }
+  50% { transform: translate(35px, -30px) scale(0.92); }
+  75% { transform: translate(-20px, 60px) scale(1.05); }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, 50px) scale(0.9); }
+  50% { transform: translate(-60px, -20px) scale(1.12); }
+  75% { transform: translate(30px, -50px) scale(0.97); }
 }
 
 @keyframes pulse-glow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+}
+
+@keyframes pulse-glow-bright {
   0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.8; }
 }
 
 .orb {
@@ -63,41 +77,55 @@ body {
 }
 
 .orb-1 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%);
-  animation: float-slow 12s ease-in-out infinite, pulse-glow 4s ease-in-out infinite;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35), rgba(109, 40, 217, 0.15) 40%, transparent 70%);
+  animation: float-1 10s ease-in-out infinite, pulse-glow-bright 4s ease-in-out infinite;
 }
 
 .orb-2 {
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.25), transparent 70%);
-  animation: float-slower 15s ease-in-out infinite, pulse-glow 5s ease-in-out infinite 1s;
+  width: 450px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3), rgba(37, 99, 235, 0.12) 40%, transparent 70%);
+  animation: float-2 13s ease-in-out infinite, pulse-glow 5s ease-in-out infinite 1s;
 }
 
 .orb-3 {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.2), transparent 70%);
-  animation: float-slow 18s ease-in-out infinite reverse, pulse-glow 6s ease-in-out infinite 2s;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.28), rgba(219, 39, 119, 0.1) 40%, transparent 70%);
+  animation: float-3 16s ease-in-out infinite, pulse-glow-bright 6s ease-in-out infinite 2s;
 }
 
 .orb-4 {
-  width: 250px;
-  height: 250px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.2), transparent 70%);
-  animation: float-slower 14s ease-in-out infinite reverse, pulse-glow 5s ease-in-out infinite 0.5s;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.1) 40%, transparent 70%);
+  animation: float-1 14s ease-in-out infinite reverse, pulse-glow 5s ease-in-out infinite 0.5s;
+}
+
+.orb-5 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.08) 40%, transparent 70%);
+  animation: float-2 11s ease-in-out infinite reverse, pulse-glow 4.5s ease-in-out infinite 1.5s;
+}
+
+.orb-6 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.22), transparent 70%);
+  animation: float-3 12s ease-in-out infinite, pulse-glow-bright 5.5s ease-in-out infinite 0.8s;
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6);
-  background-size: 200% 200%;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #34d399);
+  background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: gradient-shift 6s ease-in-out infinite;
+  animation: gradient-shift 5s ease-in-out infinite;
 }
 
 @keyframes gradient-shift {
@@ -124,16 +152,43 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(139, 92, 246, 0.4) 25%,
-    rgba(59, 130, 246, 0.4) 50%,
-    rgba(236, 72, 153, 0.4) 75%,
+    rgba(139, 92, 246, 0.5) 20%,
+    rgba(59, 130, 246, 0.5) 40%,
+    rgba(236, 72, 153, 0.5) 60%,
+    rgba(16, 185, 129, 0.4) 80%,
     transparent 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 4s linear infinite;
+  animation: shimmer 3s linear infinite;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
+  pointer-events: none;
+}
+
+/* Aurora sweep across the whole page */
+@keyframes aurora {
+  0%, 100% { transform: translateX(-30%) rotate(-5deg); opacity: 0.15; }
+  50% { transform: translateX(30%) rotate(5deg); opacity: 0.25; }
+}
+
+.aurora-band {
+  position: absolute;
+  width: 150%;
+  height: 40%;
+  top: 20%;
+  left: -25%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(139, 92, 246, 0.08),
+    rgba(59, 130, 246, 0.1),
+    rgba(16, 185, 129, 0.08),
+    rgba(236, 72, 153, 0.06),
+    transparent
+  );
+  filter: blur(60px);
+  animation: aurora 20s ease-in-out infinite;
   pointer-events: none;
 }
