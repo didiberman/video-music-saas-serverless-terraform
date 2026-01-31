@@ -7,7 +7,8 @@ resource "google_project_service" "apis" {
     "artifactregistry.googleapis.com",
     "iam.googleapis.com",
     "firestore.googleapis.com",
-    "identitytoolkit.googleapis.com"
+    "identitytoolkit.googleapis.com",
+    "firebaserules.googleapis.com"
   ])
 
   service            = each.key

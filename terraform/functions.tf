@@ -41,7 +41,7 @@ resource "google_cloudfunctions2_function" "start_generation" {
 
     environment_variables = {
       KIE_API_KEY = local.kie_api_key
-      WEBHOOK_URL = "https://${var.region}-${var.project_id}.cloudfunctions.net/webhook-handler"
+      WEBHOOK_URL = google_cloudfunctions2_function.webhook_handler.service_config[0].uri
     }
   }
 }
@@ -144,6 +144,52 @@ resource "google_cloudfunctions2_function" "check_status" {
 resource "google_cloud_run_service_iam_member" "public_check_status" {
   location = google_cloudfunctions2_function.check_status.location
   service  = google_cloudfunctions2_function.check_status.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+# Zip Source for List Generations
+data "archive_file" "list_generations_zip" {
+  type        = "zip"
+  source_dir  = "../functions/list-generations"
+  output_path = "./dist/list-generations.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "list_generations_obj" {
+  name   = "list-generations-${data.archive_file.list_generations_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.list_generations_zip.output_path
+}
+
+# List Generations Cloud Function
+resource "google_cloudfunctions2_function" "list_generations" {
+  name        = "list-generations"
+  location    = var.region
+  description = "List user video generations"
+
+  build_config {
+    runtime     = "nodejs20"
+    entry_point = "listGenerations"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.list_generations_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 30
+  }
+}
+
+# Allow public invocation for list-generations
+resource "google_cloud_run_service_iam_member" "public_list_generations" {
+  location = google_cloudfunctions2_function.list_generations.location
+  service  = google_cloudfunctions2_function.list_generations.name
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
