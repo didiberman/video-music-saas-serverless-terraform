@@ -15,7 +15,7 @@ variable "domain_name" {
   default     = "saas.didiberman.com"
 }
 
-# Secrets (Now via tfvars)
+# Secrets
 variable "kie_api_key" {
   description = "KIE AI API Key"
   type        = string
@@ -33,19 +33,19 @@ variable "cloudflare_zone_id" {
   type        = string
 }
 
-variable "supabase_url" {
-  description = "Supabase Project URL"
+# Firebase Config (Public, but managed via vars)
+variable "firebase_api_key" {
+  description = "Firebase Web API Key"
   type        = string
 }
 
-variable "supabase_anon_key" {
-  description = "Supabase Anon Key"
+variable "firebase_auth_domain" {
+  description = "Firebase Auth Domain"
   type        = string
-  sensitive   = true
 }
 
-variable "supabase_service_role_key" {
-  description = "Supabase Service Role Key"
+variable "kiesaas_service_account_json" {
+  description = "JSON key for the external KIE SaaS Firebase project (for Auth verification)"
   type        = string
   sensitive   = true
 }

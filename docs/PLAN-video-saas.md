@@ -23,7 +23,7 @@ We will use Terraform to manage the entire stack.
 ## 3. Tech Stack
 - **Frontend:** Next.js 14 (App Router), Tailwind CSS.
 - **Backend:** Node.js 20 Cloud Functions (2nd Gen).
-- **Auth:** Supabase (Auth only).
+- **Auth:** Firebase Auth (Google Identity Platform).
 - **Database:** Google Firestore (NoSQL, Serverless).
 - **Secrets:** `terraform.tfvars`.
 

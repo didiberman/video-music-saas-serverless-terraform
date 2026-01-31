@@ -1,42 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
-import { Command, Sparkles, History, LogOut } from "lucide-react";
+import { Sparkles, History, LogOut } from "lucide-react";
 import { motion } from "framer-motion";
-import { createClient } from "@supabase/supabase-js";
-
-// Initialize client for Auth usage in component
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { auth } from "@/lib/firebase/client";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+
+  // Handle Auth State
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+        router.push("/login");
+      } else {
+        setUser(currentUser);
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() || !user) return;
     setIsGenerating(true);
 
     try {
-      // Get Auth Token for Cloud Function
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error("Please log in to generate.");
-      }
+      // Get Firebase ID Token
+      const token = await user.getIdToken();
 
-      // Use Cloud Function URL or fallback to local API for dev
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "/api/generate";
+      // Call local proxy (which forwards to Cloud Function)
+      const apiUrl = "/api/generate";
 
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ prompt }),
       });
@@ -57,6 +64,13 @@ export default function Home() {
       setIsGenerating(false);
     }
   };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push("/login");
+  };
+
+  if (!user) return null; // Or a loading spinner
 
   return (
     <main className="min-h-screen w-full bg-black relative overflow-hidden selection:bg-white/20 flex flex-col items-center justify-center p-6">
@@ -81,7 +95,11 @@ export default function Home() {
           >
             <History className="w-5 h-5" />
           </button>
-          <button className="p-2 rounded-full hover:bg-white/5 transition-colors text-white/60 hover:text-white">
+          <button
+            onClick={handleSignOut}
+            className="p-2 rounded-full hover:bg-white/5 transition-colors text-white/60 hover:text-white"
+            title="Sign Out"
+          >
             <LogOut className="w-5 h-5" />
           </button>
         </div>

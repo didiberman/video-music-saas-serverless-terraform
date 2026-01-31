@@ -8,12 +8,12 @@ resource "google_cloud_run_v2_service" "frontend" {
       image = "gcr.io/${var.project_id}/video-saas:latest" # Image must be built/pushed separately
 
       env {
-        name  = "NEXT_PUBLIC_SUPABASE_URL"
-        value = local.supabase_url
+        name  = "NEXT_PUBLIC_FIREBASE_API_KEY"
+        value = var.firebase_api_key
       }
       env {
-        name  = "NEXT_PUBLIC_SUPABASE_ANON_KEY"
-        value = local.supabase_anon_key
+        name  = "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"
+        value = var.firebase_auth_domain
       }
       # Inject the Backend Function URL into the Frontend
       env {

@@ -1,12 +1,14 @@
 const functions = require('@google-cloud/functions-framework');
-const { Firestore } = require('@google-cloud/firestore');
-const { createClient } = require('@supabase/supabase-js');
+const admin = require('firebase-admin');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-// Initialize Clients
-const firestore = new Firestore();
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+// Initialize Firebase Admin (Cross-Project Credentials)
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+const db = admin.firestore();
+
 const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.WEBHOOK_URL;
 
@@ -21,21 +23,29 @@ functions.http('startGeneration', async (req, res) => {
     }
 
     try {
-        // 1. Validate Auth (Supabase JWT)
+        // 1. Validate Auth (Firebase ID Token)
         const authHeader = req.headers.authorization;
-        if (!authHeader) return res.status(401).json({ error: 'Missing Authorization header' });
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Missing Authorization header' });
+        }
 
-        const supabase = createClient(supabaseUrl, supabaseAnonKey);
-        const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.split(' ')[1]);
+        const idToken = authHeader.split('Bearer ')[1];
+        let decodedToken;
+        try {
+            decodedToken = await admin.auth().verifyIdToken(idToken);
+        } catch (e) {
+            console.error("Token verification failed:", e);
+            return res.status(401).json({ error: 'Invalid Token' });
+        }
 
-        if (authError || !user) return res.status(401).json({ error: 'Unauthorized' });
+        const uid = decodedToken.uid;
 
         // 2. Parse Body
         const { prompt } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
         // 3. Check Credits in Firestore
-        const creditsRef = firestore.collection('credits').doc(user.id);
+        const creditsRef = db.collection('credits').doc(uid);
         const creditsDoc = await creditsRef.get();
 
         // Default to 30s if no doc exists yet
@@ -74,9 +84,8 @@ functions.http('startGeneration', async (req, res) => {
         const kieData = await kieRes.json();
 
         // 5. Store in Firestore ("generations" collection)
-        // ID = kieData.id for easy webhook lookup, or auto-id with kie_id field
-        await firestore.collection('generations').doc(kieData.id).set({
-            user_id: user.id,
+        await db.collection('generations').doc(kieData.id).set({
+            user_id: uid,
             prompt: prompt,
             status: 'pending',
             kie_id: kieData.id,

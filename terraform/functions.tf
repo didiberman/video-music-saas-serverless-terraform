@@ -1,41 +1,26 @@
-# Zip the function source code
-data "archive_file" "start_generation_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/../functions/start-generation"
-  output_path = "${path.module}/dist/start-generation.zip"
-}
-
-data "archive_file" "webhook_handler_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/../functions/webhook-handler"
-  output_path = "${path.module}/dist/webhook-handler.zip"
-}
-
-# Storage bucket for function source
 resource "google_storage_bucket" "function_bucket" {
   name                        = "${var.project_id}-gcf-source"
   location                    = var.region
   uniform_bucket_level_access = true
 }
 
-# Upload Zips
+# Zip Source for Start Generation
+data "archive_file" "start_generation_zip" {
+  type        = "zip"
+  source_dir  = "../functions/start-generation"
+  output_path = "./dist/start-generation.zip"
+}
+
 resource "google_storage_bucket_object" "start_generation_obj" {
   name   = "start-generation-${data.archive_file.start_generation_zip.output_md5}.zip"
   bucket = google_storage_bucket.function_bucket.name
   source = data.archive_file.start_generation_zip.output_path
 }
 
-resource "google_storage_bucket_object" "webhook_handler_obj" {
-  name   = "webhook-handler-${data.archive_file.webhook_handler_zip.output_md5}.zip"
-  bucket = google_storage_bucket.function_bucket.name
-  source = data.archive_file.webhook_handler_zip.output_path
-}
-
-# Cloud Function: Start Generation
+# Start Generation Cloud Function
 resource "google_cloudfunctions2_function" "start_generation" {
-  name        = "start-generation"
-  location    = var.region
-  description = "Starts video generation via KIE AI"
+  name     = "start-generation"
+  location = var.region
 
   build_config {
     runtime     = "nodejs20"
@@ -52,16 +37,30 @@ resource "google_cloudfunctions2_function" "start_generation" {
     max_instance_count = 10
     available_memory   = "256M"
     timeout_seconds    = 60
+
     environment_variables = {
-      SUPABASE_URL      = local.supabase_url
-      SUPABASE_ANON_KEY = local.supabase_anon_key
-      KIE_API_KEY       = local.kie_api_key
-      WEBHOOK_URL       = google_cloudfunctions2_function.webhook_handler.service_config[0].uri
+      KIE_API_KEY = local.kie_api_key
+      # Needs webhook URL to point to the other function
+      WEBHOOK_URL                   = "https://${var.region}-${var.project_id}.cloudfunctions.net/webhook-handler"
+      FIREBASE_SERVICE_ACCOUNT_JSON = local.kiesaas_service_account_json
     }
   }
 }
 
-# Cloud Function: Webhook Handler
+# Zip Source for Webhook Handler
+data "archive_file" "webhook_handler_zip" {
+  type        = "zip"
+  source_dir  = "../functions/webhook-handler"
+  output_path = "./dist/webhook-handler.zip"
+}
+
+resource "google_storage_bucket_object" "webhook_handler_obj" {
+  name   = "webhook-handler-${data.archive_file.webhook_handler_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.webhook_handler_zip.output_path
+}
+
+# Webhook Handler Cloud Function
 resource "google_cloudfunctions2_function" "webhook_handler" {
   name        = "webhook-handler"
   location    = var.region
@@ -82,24 +81,23 @@ resource "google_cloudfunctions2_function" "webhook_handler" {
     max_instance_count = 10
     available_memory   = "256M"
     timeout_seconds    = 60
-    environment_variables = {
-      SUPABASE_URL              = local.supabase_url
-      SUPABASE_SERVICE_ROLE_KEY = local.supabase_service_key
-    }
+    # No env vars needed, uses default credentials for Firestore
   }
 }
 
-# Make Functions Public (or secure via IAM)
-resource "google_cloud_run_service_iam_member" "public_start_gen" {
-  service  = google_cloudfunctions2_function.start_generation.service_config[0].service
-  location = var.region
+# Allow public invocation for webhook (so KIE AI can call it)
+resource "google_cloud_run_service_iam_member" "public_webhook" {
+  location = google_cloudfunctions2_function.webhook_handler.location
+  service  = google_cloudfunctions2_function.webhook_handler.name
   role     = "roles/run.invoker"
-  member   = "allUsers" # TODO: Restrict to Frontend Service Account
+  member   = "allUsers"
 }
 
-resource "google_cloud_run_service_iam_member" "public_webhook" {
-  service  = google_cloudfunctions2_function.webhook_handler.service_config[0].service
-  location = var.region
+# Allow public invocation for start-generation (controlled by App Logic Auth)
+# Or restrict to Frontend service account if possible. For now public is easier to debug.
+resource "google_cloud_run_service_iam_member" "public_start_generation" {
+  location = google_cloudfunctions2_function.start_generation.location
+  service  = google_cloudfunctions2_function.start_generation.name
   role     = "roles/run.invoker"
-  member   = "allUsers" # Needs to be public for KIE AI callback
+  member   = "allUsers"
 }

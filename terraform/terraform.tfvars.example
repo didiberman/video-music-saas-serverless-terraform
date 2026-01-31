@@ -1,13 +1,10 @@
-project_id              = "your-gcp-project-id"
+project_id              = "gen-lang-client-0104807788"
 domain_name             = "saas.didiberman.com"
 
-kie_api_key             = "kie_..."
+kie_api_key             = "..."
 cloudflare_api_key      = "..."
 cloudflare_zone_id      = "..."
 
-supabase_url            = "https://....supabase.co"
-supabase_anon_key       = "..."
-supabase_service_role_key = "..."
-
-db_host                 = "aws-0-....pooler.supabase.com"
-db_password             = "..."
+# Firebase Config (Get this from Project Settings -> General -> Web App)
+firebase_api_key        = "..."
+firebase_auth_domain    = "..."

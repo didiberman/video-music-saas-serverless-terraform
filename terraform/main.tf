@@ -6,7 +6,8 @@ resource "google_project_service" "apis" {
     "cloudbuild.googleapis.com",
     "artifactregistry.googleapis.com",
     "iam.googleapis.com",
-    "firestore.googleapis.com"
+    "firestore.googleapis.com",
+    "identitytoolkit.googleapis.com"
   ])
 
   service            = each.key
