@@ -9,6 +9,7 @@ import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
+import { FallingEmojis } from "@/components/FallingEmojis";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -184,6 +185,9 @@ export default function Home() {
 
       {/* Aurora band */}
       <div className="aurora-band" />
+
+      {/* Falling emojis during video generation */}
+      {phase === "generating" && <FallingEmojis />}
 
       {/* Subtle grid overlay */}
       <div
