@@ -182,8 +182,8 @@ export function VideoGallery({ userId }: VideoGalleryProps) {
                                                 preload="none"
                                                 onEnded={() => setPlayingAudioId(null)}
                                             />
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className={`w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center transition-transform ${playingAudioId === gen.id ? "scale-110" : "group-hover:scale-110"}`}>
+                                            <div className="absolute inset-0 flex items-center justify-center z-20">
+                                                <div className={`w-14 h-14 rounded-full bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center transition-transform ${playingAudioId === gen.id ? "scale-110" : "group-hover:scale-110"}`}>
                                                     {playingAudioId === gen.id ? (
                                                         <Pause className="w-6 h-6 text-white" />
                                                     ) : (
