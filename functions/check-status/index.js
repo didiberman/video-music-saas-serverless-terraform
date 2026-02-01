@@ -57,11 +57,11 @@ functions.http('checkStatus', async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // 5. Return status (include both video_url and audio_url)
         return res.status(200).json({
             status: data.status,
             video_url: data.video_url || null,
             audio_url: data.audio_url || null,
+            audio_url_2: data.audio_url_2 || null,
             fail_message: data.fail_message || null,
         });
 

@@ -140,6 +140,7 @@ export default function Home() {
         if (data.status === "success" && (data.video_url || data.audio_url)) {
           if (data.video_url) setVideoUrl(data.video_url);
           if (data.audio_url) setAudioUrl(data.audio_url);
+          if (data.audio_url_2) setAudioUrl2(data.audio_url_2);
           setPhase("done");
         } else if (data.status === "fail") {
           setErrorMessage(data.fail_message || "Generation failed");
@@ -289,7 +290,7 @@ export default function Home() {
           <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-violet-400" />
           </div>
-          <span className="text-sm font-medium tracking-widest uppercase gradient-text">Video Zen</span>
+          <span className="text-sm font-medium tracking-widest uppercase gradient-text">VibeFlow</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -518,23 +519,26 @@ export default function Home() {
               )}
 
               {/* Audio player (for music) */}
-              {phase === "done" && audioUrl && (
-                <div className="rounded-xl overflow-hidden border border-emerald-500/20 bg-emerald-500/5 p-6 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
-                      <Music className="w-6 h-6 text-emerald-400" />
+              {phase === "done" && (audioUrl || audioUrl2) && (
+                <div className="space-y-4">
+                  {[audioUrl, audioUrl2].filter(Boolean).map((url, idx) => (
+                    <div key={idx} className="rounded-xl overflow-hidden border border-emerald-500/20 bg-emerald-500/5 p-6 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                          <Music className="w-6 h-6 text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium">Song Option {idx + 1}</p>
+                          <p className="text-white/40 text-sm">~60s • AI Generated</p>
+                        </div>
+                      </div>
+                      <audio
+                        src={url}
+                        controls
+                        className="w-full"
+                      />
                     </div>
-                    <div>
-                      <p className="text-white font-medium">Your song is ready!</p>
-                      <p className="text-white/40 text-sm">1 minute • AI Generated</p>
-                    </div>
-                  </div>
-                  <audio
-                    src={audioUrl}
-                    controls
-                    autoPlay
-                    className="w-full"
-                  />
+                  ))}
                 </div>
               )}
 

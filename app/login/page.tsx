@@ -113,7 +113,7 @@ export default function LoginPage() {
                 <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shimmer-border">
                     <Sparkles className="w-7 h-7 text-violet-400" />
                 </div>
-                <h1 className="text-3xl font-light tracking-wider gradient-text">Video Zen</h1>
+                <h1 className="text-3xl font-light tracking-wider gradient-text">VibeFlow</h1>
                 <p className="text-sm text-white/30 tracking-wide">AI-powered video creation</p>
             </motion.div>
 

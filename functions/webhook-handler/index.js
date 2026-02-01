@@ -29,22 +29,33 @@ functions.http('handleWebhook', async (req, res) => {
 
             // Take the first song
             const firstSong = songsArray[0];
+            const secondSong = songsArray[1] || null;
 
-            // For 'complete' callback, use audio_url. For 'text' callback, use stream_audio_url
-            const audioUrl = callbackType === 'complete'
-                ? (firstSong.audio_url || firstSong.source_audio_url || firstSong.stream_audio_url || '')
-                : (firstSong.stream_audio_url || firstSong.audio_url || '');
-            const imageUrl = firstSong.image_url || '';
-            const title = firstSong.title || '';
-            const duration = firstSong.duration || null;
+            // Helper to extract audio URL based on callback type
+            const getAudioUrl = (song) => {
+                if (!song) return '';
+                return callbackType === 'complete'
+                    ? (song.audio_url || song.source_audio_url || song.stream_audio_url || '')
+                    : (song.stream_audio_url || song.audio_url || '');
+            };
 
-            console.log(`Suno ${callbackType} callback for Task ${taskId}: ${audioUrl ? 'success' : 'no audio URL'}`);
+            const audioUrl1 = getAudioUrl(firstSong);
+            const audioUrl2 = getAudioUrl(secondSong);
+
+            const imageUrl1 = firstSong?.image_url || '';
+            const imageUrl2 = secondSong?.image_url || '';
+            const title = firstSong?.title || '';
+            const duration = firstSong?.duration || null;
+
+            console.log(`Suno ${callbackType} callback for Task ${taskId}: ${audioUrl1 ? 'success' : 'no audio URL'}`);
 
             const docRef = firestore.collection('generations').doc(taskId);
             const updateData = {
-                status: audioUrl ? 'success' : 'waiting',
-                audio_url: audioUrl,
-                image_url: imageUrl,
+                status: (audioUrl1 || audioUrl2) ? 'success' : 'waiting',
+                audio_url: audioUrl1,
+                audio_url_2: audioUrl2,
+                image_url: imageUrl1,
+                image_url_2: imageUrl2,
                 updated_at: new Date()
             };
 
