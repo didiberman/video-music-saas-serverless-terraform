@@ -57,7 +57,7 @@ functions.http('startMusicGeneration', async (req, res) => {
         const isAdmin = videoSeconds > 10000;
 
         // 2. Parse Body
-        const { prompt } = req.body;
+        const { prompt, style } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
         // 3. Check Music Credits in Firestore (skip for admin)
