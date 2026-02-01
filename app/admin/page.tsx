@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
-import { Users, Video, Music, CreditCard, Shield, Activity } from "lucide-react";
+import { Users, CreditCard, Shield, Activity } from "lucide-react";
 import Link from "next/link";
 
 interface AdminUser {
@@ -172,13 +171,13 @@ export default function AdminDashboard() {
                                         {g.type === 'music' ? 'Music' : 'Video'}
                                     </span>
                                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${g.status === 'success' ? 'bg-emerald-500/10 text-emerald-400' :
-                                            g.status === 'fail' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'
+                                        g.status === 'fail' ? 'bg-red-500/10 text-red-400' : 'bg-yellow-500/10 text-yellow-400'
                                         }`}>
                                         {g.status}
                                     </span>
                                 </div>
                                 <p className="text-sm text-white/80 line-clamp-2 leading-relaxed">
-                                    "{g.original_prompt}"
+                                    &quot;{g.original_prompt}&quot;
                                 </p>
                                 <div className="flex items-center justify-between mt-1 pt-2 border-t border-white/5">
                                     <div className="flex items-center gap-1.5 text-xs text-white/40">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { format } from "date-fns";
-import { Download, Film, Music, CreditCard } from "lucide-react";
+import { Film, Music, CreditCard } from "lucide-react";
 
 interface Transaction {
     id: string;
