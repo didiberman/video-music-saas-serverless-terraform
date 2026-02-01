@@ -212,7 +212,7 @@ export default function Home() {
           try {
             const event = JSON.parse(line);
 
-            if (event.type === "script") {
+            if (event.type === "script" || event.type === "lyrics") {
               setStreamedScript((prev) => prev + event.text);
             } else if (event.type === "status") {
               setPhase("generating");
