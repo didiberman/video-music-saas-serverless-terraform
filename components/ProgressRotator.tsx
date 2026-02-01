@@ -25,15 +25,15 @@ export function ProgressRotator({ messages = MESSAGES }: { messages?: string[] }
     }, [messages.length]);
 
     return (
-        <div className="h-12 flex items-center justify-center overflow-hidden relative w-full px-4">
+        <div className="min-h-[3rem] flex items-center justify-center w-full px-4">
             <AnimatePresence mode="wait">
                 <motion.p
                     key={index}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="text-sm font-light text-violet-200/70 tracking-wide text-center absolute w-full"
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="text-sm font-light text-violet-200/70 tracking-wide text-center w-full"
                 >
                     {messages[index]}
                 </motion.p>
