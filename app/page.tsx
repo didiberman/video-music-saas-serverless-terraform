@@ -582,7 +582,7 @@ export default function Home() {
         transition={{ delay: 0.8 }}
         className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
       >
-        made by didi with heart
+        made by didi with ❤️
       </motion.p>
 
       {/* Video Vault Drawer */}
