@@ -129,6 +129,7 @@ jobs:
         if: needs.check-paths.outputs.start_generation == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
+          gen2: true
           name: start-generation
           runtime: nodejs22
           entry_point: startGeneration
@@ -139,6 +140,7 @@ jobs:
         if: needs.check-paths.outputs.webhook_handler == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
+          gen2: true
           name: webhook-handler
           runtime: nodejs22
           entry_point: handleWebhook
@@ -149,6 +151,7 @@ jobs:
         if: needs.check-paths.outputs.check_status == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
+          gen2: true
           name: check-status
           runtime: nodejs22
           entry_point: checkStatus
@@ -159,6 +162,7 @@ jobs:
         if: needs.check-paths.outputs.list_generations == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
+          gen2: true
           name: list-generations
           runtime: nodejs22
           entry_point: listGenerations
