@@ -14,7 +14,6 @@ env:
   SERVICE_ACCOUNT: github-actions-sa@gen-lang-client-0104807788.iam.gserviceaccount.com
 
 jobs:
-jobs:
   check-paths:
     runs-on: ubuntu-latest
     outputs:
@@ -101,11 +100,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Configure Docker
-        if: steps.changes.outputs.frontend == 'true'
+        if: needs.check-paths.outputs.frontend == 'true'
         run: gcloud auth configure-docker
 
       - name: Build and Push
-        if: steps.changes.outputs.frontend == 'true'
+        if: needs.check-paths.outputs.frontend == 'true'
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="AIzaSyCpuuD51EkkiGIpr57FT_RqikO6Bdplrec" \
@@ -118,7 +117,7 @@ jobs:
           docker push gcr.io/${{ env.PROJECT_ID }}/video-saas:latest
 
       - name: Deploy to Cloud Run
-        if: steps.changes.outputs.frontend == 'true'
+        if: needs.check-paths.outputs.frontend == 'true'
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: ${{ env.SERVICE_NAME }}
@@ -127,7 +126,7 @@ jobs:
 
       # --- Functions Deployment ---
       - name: Deploy start-generation
-        if: steps.changes.outputs.start_generation == 'true'
+        if: needs.check-paths.outputs.start_generation == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
           name: start-generation
@@ -137,7 +136,7 @@ jobs:
           source_dir: functions/start-generation
 
       - name: Deploy webhook-handler
-        if: steps.changes.outputs.webhook_handler == 'true'
+        if: needs.check-paths.outputs.webhook_handler == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
           name: webhook-handler
@@ -147,7 +146,7 @@ jobs:
           source_dir: functions/webhook-handler
 
       - name: Deploy check-status
-        if: steps.changes.outputs.check_status == 'true'
+        if: needs.check-paths.outputs.check_status == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
           name: check-status
@@ -157,7 +156,7 @@ jobs:
           source_dir: functions/check-status
 
       - name: Deploy list-generations
-        if: steps.changes.outputs.list_generations == 'true'
+        if: needs.check-paths.outputs.list_generations == 'true'
         uses: google-github-actions/deploy-cloud-functions@v2
         with:
           name: list-generations
