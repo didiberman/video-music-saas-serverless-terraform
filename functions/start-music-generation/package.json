@@ -1,0 +1,13 @@
+{
+    "name": "start-music-generation",
+    "version": "1.0.0",
+    "description": "Start Music Generation Function (Suno API)",
+    "main": "index.js",
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.0.0",
+        "@google-cloud/firestore": "^8.2.0",
+        "@google-cloud/vertexai": "^1.1.0",
+        "firebase-admin": "^11.5.0",
+        "node-fetch": "^2.6.7"
+    }
+}

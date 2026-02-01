@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
 import { VideoGallery } from "@/components/VideoGallery";
-import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical, Mic, MicOff } from "lucide-react";
+import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical, Mic, MicOff, Video, Music } from "lucide-react";
 import { motion } from "framer-motion";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -14,6 +14,7 @@ import { ProgressRotator } from "@/components/ProgressRotator";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
+type GenerationMode = "video" | "music";
 
 const SCRIPTING_MESSAGES = [
   "Analyzing your prompt...",
@@ -27,6 +28,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<"6" | "10">("6");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("video");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -37,6 +39,7 @@ export default function Home() {
   const [streamedScript, setStreamedScript] = useState("");
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Voice input state
@@ -116,11 +119,12 @@ export default function Home() {
 
         if (cancelled) return;
 
-        if (data.status === "success" && data.video_url) {
-          setVideoUrl(data.video_url);
+        if (data.status === "success" && (data.video_url || data.audio_url)) {
+          if (data.video_url) setVideoUrl(data.video_url);
+          if (data.audio_url) setAudioUrl(data.audio_url);
           setPhase("done");
         } else if (data.status === "fail") {
-          setErrorMessage(data.fail_message || "Video generation failed");
+          setErrorMessage(data.fail_message || "Generation failed");
           setPhase("error");
         }
       } catch (e) {
@@ -146,18 +150,24 @@ export default function Home() {
     setStreamedScript("");
     setCurrentTaskId(null);
     setVideoUrl(null);
+    setAudioUrl(null);
     setErrorMessage(null);
 
     try {
       const token = await user.getIdToken();
 
-      const res = await fetch("/api/generate", {
+      const apiEndpoint = generationMode === "music" ? "/api/generate-music" : "/api/generate";
+      const res = await fetch(apiEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt, duration, aspectRatio }),
+        body: JSON.stringify(
+          generationMode === "music"
+            ? { prompt }
+            : { prompt, duration, aspectRatio }
+        ),
       });
 
       const contentType = res.headers.get("content-type") || "";
@@ -311,58 +321,91 @@ export default function Home() {
 
                 <div className="flex flex-col gap-3 px-4 md:px-6 pb-4 border-t border-white/5 pt-4 md:flex-row md:justify-between md:items-center">
                   <div className="flex items-center gap-3 md:gap-4">
-                    {/* Duration selector */}
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5 text-white/30" />
-                      <div className="flex rounded-lg overflow-hidden border border-white/10">
-                        <button
-                          type="button"
-                          onClick={() => setDuration("6")}
-                          className={`px-3 py-1.5 text-xs font-medium transition-all ${duration === "6"
-                            ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
-                            : "text-white/30 hover:text-white/50 border-r border-white/10"
-                            }`}
-                        >
-                          6s
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDuration("10")}
-                          className={`px-3 py-1.5 text-xs font-medium transition-all ${duration === "10"
-                            ? "bg-violet-500/20 text-violet-300"
-                            : "text-white/30 hover:text-white/50"
-                            }`}
-                        >
-                          10s
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Aspect ratio selector */}
+                    {/* Mode toggle: Video / Music */}
                     <div className="flex rounded-lg overflow-hidden border border-white/10">
                       <button
                         type="button"
-                        onClick={() => setAspectRatio("9:16")}
-                        className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${aspectRatio === "9:16"
+                        onClick={() => setGenerationMode("video")}
+                        className={`px-3 py-1.5 text-xs font-medium transition-all flex items-center gap-1.5 ${generationMode === "video"
                           ? "bg-violet-500/20 text-violet-300"
                           : "text-white/30 hover:text-white/50"
                           }`}
-                        title="Portrait / Instagram (9:16)"
                       >
-                        <RectangleVertical className="w-4 h-4" />
+                        <Video className="w-3.5 h-3.5" />
+                        Video
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAspectRatio("16:9")}
-                        className={`px-2.5 py-1.5 transition-all border-l border-white/10 flex items-center gap-1 ${aspectRatio === "16:9"
-                          ? "bg-violet-500/20 text-violet-300"
+                        onClick={() => setGenerationMode("music")}
+                        className={`px-3 py-1.5 text-xs font-medium transition-all border-l border-white/10 flex items-center gap-1.5 ${generationMode === "music"
+                          ? "bg-emerald-500/20 text-emerald-300"
                           : "text-white/30 hover:text-white/50"
                           }`}
-                        title="Landscape / YouTube (16:9)"
                       >
-                        <RectangleHorizontal className="w-4 h-4" />
+                        <Music className="w-3.5 h-3.5" />
+                        Music
                       </button>
                     </div>
+
+                    {/* Video-specific options (hidden for music) */}
+                    {generationMode === "video" && (
+                      <>
+                        {/* Duration selector */}
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-white/30" />
+                          <div className="flex rounded-lg overflow-hidden border border-white/10">
+                            <button
+                              type="button"
+                              onClick={() => setDuration("6")}
+                              className={`px-3 py-1.5 text-xs font-medium transition-all ${duration === "6"
+                                ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
+                                : "text-white/30 hover:text-white/50 border-r border-white/10"
+                                }`}
+                            >
+                              6s
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setDuration("10")}
+                              className={`px-3 py-1.5 text-xs font-medium transition-all ${duration === "10"
+                                ? "bg-violet-500/20 text-violet-300"
+                                : "text-white/30 hover:text-white/50"
+                                }`}
+                            >
+                              10s
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Aspect ratio selector (video only) */}
+                    {generationMode === "video" && (
+                      <div className="flex rounded-lg overflow-hidden border border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setAspectRatio("9:16")}
+                          className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${aspectRatio === "9:16"
+                            ? "bg-violet-500/20 text-violet-300"
+                            : "text-white/30 hover:text-white/50"
+                            }`}
+                          title="Portrait / Instagram (9:16)"
+                        >
+                          <RectangleVertical className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAspectRatio("16:9")}
+                          className={`px-2.5 py-1.5 transition-all border-l border-white/10 flex items-center gap-1 ${aspectRatio === "16:9"
+                            ? "bg-violet-500/20 text-violet-300"
+                            : "text-white/30 hover:text-white/50"
+                            }`}
+                          title="Landscape / YouTube (16:9)"
+                        >
+                          <RectangleHorizontal className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -428,6 +471,27 @@ export default function Home() {
                 <div className="rounded-xl overflow-hidden border border-white/10">
                   <video
                     src={videoUrl}
+                    controls
+                    autoPlay
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Audio player (for music) */}
+              {phase === "done" && audioUrl && (
+                <div className="rounded-xl overflow-hidden border border-emerald-500/20 bg-emerald-500/5 p-6 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                      <Music className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">Your song is ready!</p>
+                      <p className="text-white/40 text-sm">1 minute • AI Generated</p>
+                    </div>
+                  </div>
+                  <audio
+                    src={audioUrl}
                     controls
                     autoPlay
                     className="w-full"

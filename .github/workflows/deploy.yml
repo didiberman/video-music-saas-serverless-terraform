@@ -19,6 +19,7 @@ jobs:
     outputs:
       frontend: ${{ steps.changes.outputs.frontend }}
       start_generation: ${{ steps.changes.outputs.start_generation }}
+      start_music_generation: ${{ steps.changes.outputs.start_music_generation }}
       webhook_handler: ${{ steps.changes.outputs.webhook_handler }}
       check_status: ${{ steps.changes.outputs.check_status }}
       list_generations: ${{ steps.changes.outputs.list_generations }}
@@ -47,6 +48,8 @@ jobs:
               - 'Dockerfile'
             start_generation:
               - 'functions/start-generation/**'
+            start_music_generation:
+              - 'functions/start-music-generation/**'
             webhook_handler:
               - 'functions/webhook-handler/**'
             check_status:
@@ -168,4 +171,15 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/list-generations \
             --entry-point=listGenerations \
+            --trigger-http
+
+      - name: Deploy start-music-generation
+        if: needs.check-paths.outputs.start_music_generation == 'true'
+        run: |
+          gcloud functions deploy start-music-generation \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/start-music-generation \
+            --entry-point=startMusicGeneration \
             --trigger-http

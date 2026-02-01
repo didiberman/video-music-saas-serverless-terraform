@@ -116,6 +116,68 @@ resource "google_cloud_run_service_iam_member" "public_start_generation" {
   member   = "allUsers"
 }
 
+# --- MUSIC GENERATION ---
+
+# Zip Source for Start Music Generation
+data "archive_file" "start_music_generation_zip" {
+  type        = "zip"
+  source_dir  = "../functions/start-music-generation"
+  output_path = "./dist/start-music-generation.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "start_music_generation_obj" {
+  name   = "start-music-generation-${data.archive_file.start_music_generation_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.start_music_generation_zip.output_path
+}
+
+# Start Music Generation Cloud Function
+resource "google_cloudfunctions2_function" "start_music_generation" {
+  name     = "start-music-generation"
+  location = var.region
+
+  build_config {
+    runtime     = "nodejs22"
+    entry_point = "startMusicGeneration"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.start_music_generation_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 120 # Music takes longer
+
+    environment_variables = {
+      WEBHOOK_URL = google_cloudfunctions2_function.webhook_handler.service_config[0].uri
+    }
+
+    secret_environment_variables {
+      key        = "KIE_API_KEY"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.kie_api_key.secret_id
+      version    = "latest"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
+  }
+}
+
+# Allow public invocation for music generation
+resource "google_cloud_run_service_iam_member" "public_start_music_generation" {
+  location = google_cloudfunctions2_function.start_music_generation.location
+  service  = google_cloudfunctions2_function.start_music_generation.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
 # Zip Source for Check Status
 data "archive_file" "check_status_zip" {
   type        = "zip"
