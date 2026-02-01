@@ -144,7 +144,7 @@ export function TransactionHistory() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-red-400 font-bold text-sm">-{gen.cost || (gen.type === 'music' ? 10 : 0)} Credits</p>
+                                        <p className="text-red-400 font-bold text-sm">-{gen.cost || (gen.type === 'music' ? 10 : 6)} Credits</p>
                                         <p className="text-white/40 text-xs capitalize">{gen.status}</p>
                                     </div>
                                 </div>
