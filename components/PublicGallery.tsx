@@ -53,7 +53,7 @@ export function PublicGallery() {
         }
     };
 
-    const displayedItems = isMobile ? items.slice(0, 10) : items;
+    const displayedItems = isMobile ? items.slice(0, 10) : items.slice(0, 15);
 
     if (loading) {
         return (
