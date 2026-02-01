@@ -49,3 +49,5 @@ terraform/dist/
 
 # Cloud Functions
 functions/*/node_modules
+.agent/
+.claude/
