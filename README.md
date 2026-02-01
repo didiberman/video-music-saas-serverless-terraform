@@ -6,37 +6,37 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 
 ```mermaid
 graph TD
-    User[User Browser] -->|Voice/Text Input| NextJS[Next.js Frontend (Cloud Run)]
+    User["User Browser"] -->|Voice/Text Input| NextJS["Next.js Frontend (Cloud Run)"]
     
     subgraph "Frontend Services"
-        NextJS -->|/api/generate| StartGen[start-generation]
-        NextJS -->|/api/generate-music| StartMusic[start-music-generation]
-        NextJS -->|/api/checkout| CreateCheckout[create-checkout-session]
-        NextJS -->|/api/transactions| ListTx[list-transactions]
-        NextJS -->|/api/status| CheckStatus[check-status]
+        NextJS -->|/api/generate| StartGen["start-generation"]
+        NextJS -->|/api/generate-music| StartMusic["start-music-generation"]
+        NextJS -->|/api/checkout| CreateCheckout["create-checkout-session"]
+        NextJS -->|/api/transactions| ListTx["list-transactions"]
+        NextJS -->|/api/status| CheckStatus["check-status"]
     end
 
     subgraph "Backend (Cloud Functions)"
-        StartGen -->|Gen Script| VertexAI[Vertex AI (Gemini)]
-        StartGen -->|Gen Video| KIE[KIE AI (Video)]
+        StartGen -->|Gen Script| VertexAI["Vertex AI (Gemini)"]
+        StartGen -->|Gen Video| KIE["KIE AI (Video)"]
         StartMusic -->|Gen Lyrics| VertexAI
-        StartMusic -->|Gen Music| KIE_Suno[KIE AI (Suno)]
+        StartMusic -->|Gen Music| KIE_Suno["KIE AI (Suno)"]
         
-        CreateCheckout -->|Create Session| Stripe[Stripe API]
+        CreateCheckout -->|Create Session| Stripe["Stripe API"]
         
-        Stripe -->|Webhook| PaymentHook[payment-webhook]
+        Stripe -->|Webhook| PaymentHook["payment-webhook"]
     end
 
     subgraph "Data & Storage"
-        Firestore[(Firestore)]
-        SecretMgr[Secret Manager]
+        Firestore[("Firestore")]
+        SecretMgr["Secret Manager"]
     end
 
     PaymentHook -->|Update Credits| Firestore
     StartGen -->|Deduct Credits| Firestore
     StartMusic -->|Deduct Credits| Firestore
     
-    KIE -->|Webhook| WebhookHandler[webhook-handler]
+    KIE -->|Webhook| WebhookHandler["webhook-handler"]
     KIE_Suno -->|Webhook| WebhookHandler
     WebhookHandler -->|Update Status| Firestore
 ```
