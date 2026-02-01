@@ -1,4 +1,4 @@
-# Didi Video Dreamer
+# VibeFlow - AI Video & Music Generator
 
 A minimalist AI-powered video and music generation platform. Users describe a video or song idea (via text or voice), the system generates content using Google Gemini + KIE AI — all through a sleek glassmorphism interface.
 
@@ -17,21 +17,19 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Next.js Frontend (Cloud Run)                 │
 │                                                                 │
-│  /api/generate ──────▶ Proxies to Cloud Function               │
+│  /api/generate ──────▶ Proxies to Video Function               │
+│  /api/generate-music ▶ Proxies to Music Function               │
 │  /api/status/[id] ───▶ Polls video completion status           │
-│  /api/generations ───▶ Lists user's video history              │
+│  /api/generations ───▶ Lists user's history                    │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              start-generation (Cloud Function)                  │
+│       Cloud Functions (Gen 2 - Node.js 22)                      │
 │                                                                 │
-│  1. Verify Firebase ID token                                    │
-│  2. Check credit balance                                        │
-│  3. Stream script from Gemini ─────▶ NDJSON to browser         │
-│  4. Submit to KIE AI                                            │
-│  5. Store in Firestore (status: waiting)                        │
-│  6. Deduct credits                                              │
+│  [start-generation]        [start-music-generation]             │
+│   Video Logic               Music Logic                         │
+│   (Gemini + KIE Video)      (Gemini Lyrics + KIE Suno)          │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -62,7 +60,7 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 
 ## Features
 
-### Video Generation
+### Video Generation 🎥
 - **Google OAuth** login via Firebase Authentication
 - **Voice input** — speak your video idea using browser Speech Recognition API
 - **Streaming script generation** — watch the AI script appear in real-time via NDJSON streaming
@@ -74,24 +72,26 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 ### Music Generation 🎵
 - **AI lyrics** — Gemini generates lyrics from your prompt
 - **Suno AI music** — KIE Suno API (model V4_5PLUS) creates ~1 minute songs
+- **Audio player** — listen to completed songs with cover art and waveform
 - **2 free songs** per user (separate from video credits)
-- **Audio player** — listen to completed songs in-app
 
 ### UI/UX
-- **Video/Music toggle** — switch between generation modes
-- **Video Vault** — slide-out drawer to browse generated content
-- **Glassmorphism UI** — dark theme with animated gradient orbs, backdrop blur, Framer Motion animations
+- **Public Feed** — Community gallery visible on landing page
+- **Video/Music toggle** — seamless switch between generation modes
+- **Video Vault** — slide-out drawer to browse your generated content
+- **Glassmorphism UI** — sleek dark theme with ambient animations
+- **Mobile Optimized** — responsive layout that works perfectly on phones
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4, Framer Motion |
-| Backend | Google Cloud Functions Gen2 (Node.js 20) |
-| Database | Google Firestore |
-| Auth | Firebase Authentication (Google OAuth) |
-| AI | Google Vertex AI (Gemini 2.5 Flash), KIE AI (grok-imagine/image-to-video) |
-| Hosting | Google Cloud Run (containerized) |
+| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4 |
+| Backend | Google Cloud Functions Gen 2 (Node.js 22) |
+| Database | Google Firestore (Optimized with limits & indexes) |
+| Auth | Firebase Authentication (Google OAuth) + Persistence |
+| AI | Google Vertex AI (Gemini Flash), KIE AI (Video + Suno) |
+| Hosting | Google Cloud Run (Frontend) |
 | Infrastructure | Terraform |
 | CI/CD | GitHub Actions (OIDC federation) |
 
@@ -100,36 +100,37 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 ```
 .
 ├── app/                          # Next.js App Router
-│   ├── layout.tsx                # Root layout (Geist fonts, metadata)
+│   ├── layout.tsx                # Root layout (VibeFlow)
 │   ├── page.tsx                  # Main dashboard with generation UI
-│   ├── login/page.tsx            # Google OAuth login page
+│   ├── login/page.tsx            # Login with Public Gallery
 │   ├── globals.css               # Tailwind + glassmorphism styles
 │   └── api/
-│       ├── generate/route.ts     # Proxy to start-generation function
+│       ├── generate/route.ts     # Video generation proxy
+│       ├── generate-music/route.ts # Music generation proxy
 │       ├── status/[taskId]/route.ts  # Poll video completion status
-│       └── generations/route.ts  # List user's generations
+│       └── gallery/route.ts      # Public feed endpoint
 ├── components/
-│   ├── GlassCard.tsx             # Animated glass card component
-│   ├── VideoDrawer.tsx           # Video vault slide-out panel
+│   ├── PublicGallery.tsx         # Community feed (lazy loaded)
+│   ├── VideoGallery.tsx          # User vault (video + audio support)
 │   └── StreamingText.tsx         # Markdown renderer with typing cursor
 ├── lib/
 │   └── firebase/client.ts        # Firebase SDK initialization
 ├── types/
 │   └── speech.d.ts               # TypeScript declarations for Web Speech API
 ├── functions/
-│   ├── start-generation/         # Main generation function
+│   ├── start-generation/         # Video generation logic
 │   │   ├── index.js              # Validates auth, streams Gemini, calls KIE
 │   │   └── package.json
 │   ├── webhook-handler/          # KIE AI callback handler
 │   │   ├── index.js              # Updates Firestore with video URL
 │   │   └── package.json
-│   ├── check-status/             # Video status checker
+│   ├── check-status/             # Status poller
 │   │   ├── index.js
 │   │   └── package.json
-│   ├── list-generations/         # User generations list
+│   ├── list-generations/         # History fetcher
 │   │   ├── index.js
 │   │   └── package.json
-│   └── start-music-generation/   # Music generation function
+│   └── start-music-generation/   # Music generation logic
 │       ├── index.js              # Gemini lyrics + KIE Suno API
 │       └── package.json
 ├── terraform/                    # Infrastructure as Code
@@ -139,7 +140,7 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 │   ├── firestore.tf              # Database + security rules + indexes
 │   ├── oidc.tf                   # GitHub Actions OIDC federation
 │   └── variables.tf              # Input variables
-├── .github/workflows/
+├── .github/workflows/            # CI/CD pipelines
 │   └── deploy.yml                # CI/CD pipeline (frontend only)
 ├── Dockerfile                    # Multi-stage build (node:20-alpine)
 └── public/
@@ -148,14 +149,14 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 
 ## User Flow
 
-1. **Sign in** with Google on `/login`
-2. **Enter prompt** by typing or using voice input (microphone button)
-3. **Select options** — duration (6s/10s) and aspect ratio (9:16/16:9)
-4. **Click Generate** — request sent to `/api/generate`
-5. **Watch script stream** — Gemini's response appears character by character
-6. **Wait for video** — UI shows "Generating video... Usually takes 30-60 seconds"
-7. **Video appears** — webhook updates Firestore, polling detects completion
-8. **Browse Vault** — view all past generations in the slide-out drawer
+1.  **Sign in** with Google on `/login`
+2.  **Enter prompt** by typing or using voice input (microphone button)
+3.  **Select options** — duration (6s/10s) and aspect ratio (9:16/16:9)
+4.  **Click Generate** — request sent to `/api/generate`
+5.  **Watch script stream** — Gemini's response appears character by character
+6.  **Wait for video** — UI shows "Generating video... Usually takes 30-60 seconds"
+7.  **Video appears** — webhook updates Firestore, polling detects completion
+8.  **Browse Vault** — view all past generations in the slide-out drawer
 
 ## Data Model (Firestore)
 
@@ -207,23 +208,23 @@ Document ID = Firebase UID
 
 ### Local Development
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-2. **Create `.env.local`:**
-   ```env
-   NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-   NEXT_PUBLIC_API_URL=https://your-start-generation-function-url
-   ```
+2.  **Create `.env.local`:**
+    ```env
+    NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+    NEXT_PUBLIC_API_URL=https://your-start-generation-function-url
+    ```
 
-3. **Run dev server:**
-   ```bash
-   npm run dev
-   ```
+3.  **Run dev server:**
+    ```bash
+    npm run dev
+    ```
 
 ### Cloud Functions
 
@@ -268,14 +269,14 @@ Terraform manages:
 Pushes to `main` or `master` trigger a smart, automated deployment pipeline.
 The workflow uses **Path Filtering** to only deploy components that have changed:
 
-- **Frontend (Cloud Run)**:
-  - Triggers if changes detected in `app/`, `components/`, `lib/`, `public/`, etc.
-  - Builds Docker image and deploys to Cloud Run.
+-   **Frontend (Cloud Run)**:
+    -   Triggers if changes detected in `app/`, `components/`, `lib/`, `public/`, etc.
+    -   Builds Docker image and deploys to Cloud Run.
 
-- **Cloud Functions**:
-  - Each function (`start-generation`, `webhook-handler`, etc.) is tracked independently.
-  - Deploys *only* if files in its specific `functions/<name>` directory change.
-  - Deploys directly to Google Cloud Functions (Gen 2) using Node.js 22.
+-   **Cloud Functions**:
+    -   Each function (`start-generation`, `webhook-handler`, etc.) is tracked independently.
+    -   Deploys *only* if files in its specific `functions/<name>` directory change.
+    -   Deploys directly to Google Cloud Functions (Gen 2) using Node.js 22.
 
 All deployments use **OIDC federation** for passwordless, secure authentication with Google Cloud.
 
@@ -291,25 +292,16 @@ All deployments use **OIDC federation** for passwordless, secure authentication 
 ## API Endpoints
 
 ### POST `/api/generate`
-Proxies to `start-generation` function. Returns NDJSON stream:
-```
-{"type":"script","text":"..."}     # Streamed script chunks
-{"type":"status","message":"..."}  # Status updates
-{"type":"done","taskId":"..."}     # Generation started
-{"type":"error","message":"..."}   # Error occurred
-```
+Starts video generation. Returns NDJSON stream.
+
+### POST `/api/generate-music`
+Starts music generation. Returns NDJSON stream.
 
 ### GET `/api/status/[taskId]`
-Returns generation status:
-```json
-{
-  "status": "success",
-  "video_url": "https://..."
-}
-```
+Polls completion status.
 
-### GET `/api/generations`
-Returns user's generation history (requires auth).
+### GET `/api/gallery`
+Public feed of recent successful generations.
 
 ## License
 
