@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Didi Video Dreamer",
-  description: "Transform your ideas into stunning AI-generated videos",
+  title: "VibeFlow - AI Video & Music Generator",
+  description: "Transform your ideas into stunning AI-generated videos and songs",
   icons: {
     icon: "/favicon.svg",
   },
