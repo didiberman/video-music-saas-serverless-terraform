@@ -13,16 +13,16 @@ const MESSAGES = [
     "Polishing final output...",
 ];
 
-export function ProgressRotator() {
+export function ProgressRotator({ messages = MESSAGES }: { messages?: string[] }) {
     const [index, setIndex] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % MESSAGES.length);
+            setIndex((prev) => (prev + 1) % messages.length);
         }, 3000); // Rotate every 3 seconds
 
         return () => clearInterval(interval);
-    }, []);
+    }, [messages.length]);
 
     return (
         <div className="h-12 flex items-center justify-center overflow-hidden relative w-full px-4">
@@ -35,7 +35,7 @@ export function ProgressRotator() {
                     transition={{ duration: 0.5, ease: "easeInOut" }}
                     className="text-sm font-light text-violet-200/70 tracking-wide text-center absolute w-full"
                 >
-                    {MESSAGES[index]}
+                    {messages[index]}
                 </motion.p>
             </AnimatePresence>
         </div>

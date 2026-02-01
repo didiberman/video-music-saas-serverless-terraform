@@ -33,6 +33,15 @@ resource "google_cloud_run_v2_service" "frontend" {
       max_instance_count = 10
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      client,
+      client_version,
+      template[0].containers[0].image,
+      template[0].labels
+    ]
+  }
 }
 
 # Map custom domain to Cloud Run service.
