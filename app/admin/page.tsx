@@ -41,16 +41,16 @@ export default function AdminDashboard() {
     const router = useRouter();
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const auth = getFirebaseAuth();
-            const currentUser = auth?.currentUser;
+        const auth = getFirebaseAuth();
+        if (!auth) return;
 
-            if (!currentUser) {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (!user) {
                 router.push('/login');
                 return;
             }
 
-            if (currentUser.email !== 'yadidb@gmail.com') {
+            if (user.email !== 'yadidb@gmail.com') {
                 router.push('/');
                 return;
             }
@@ -58,8 +58,7 @@ export default function AdminDashboard() {
             setAuthorized(true);
 
             try {
-                const token = await currentUser.getIdToken();
-                // Assumed URL pattern for new function
+                const token = await user.getIdToken();
                 const res = await fetch("https://admin-stats-7lnajjfgla-uc.a.run.app", {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
@@ -77,10 +76,9 @@ export default function AdminDashboard() {
             } finally {
                 setLoading(false);
             }
-        };
+        });
 
-        const timer = setTimeout(checkAuth, 1000); // Give auth state a moment to settle
-        return () => clearTimeout(timer);
+        return () => unsubscribe();
     }, [router]);
 
     if (!authorized && loading) {
