@@ -46,6 +46,7 @@ export default function Home() {
   const [duration, setDuration] = useState<"6" | "10">("6");
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [generationMode, setGenerationMode] = useState<GenerationMode>("video");
+  const [style, setStyle] = useState("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -182,7 +183,7 @@ export default function Home() {
         },
         body: JSON.stringify(
           generationMode === "music"
-            ? { prompt }
+            ? { prompt, style }
             : { prompt, duration, aspectRatio }
         ),
       });
@@ -399,6 +400,20 @@ export default function Home() {
                           </div>
                         </div>
                       </>
+                    )}
+
+                    {/* Music Style Input */}
+                    {generationMode === "music" && (
+                      <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-1 flex-1">
+                        <span className="text-white/40 text-sm font-light whitespace-nowrap">Style:</span>
+                        <input
+                          type="text"
+                          value={style}
+                          onChange={(e) => setStyle(e.target.value)}
+                          placeholder="pop, upbeat..."
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 w-full min-w-[120px]"
+                        />
+                      </div>
                     )}
 
                     {/* Aspect ratio selector (video only) */}

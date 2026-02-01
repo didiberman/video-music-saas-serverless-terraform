@@ -138,7 +138,7 @@ Return ONLY the lyrics text, no labels, no remarks.`;
             body: JSON.stringify({
                 customMode: true,
                 prompt: generatedLyrics.substring(0, 3000), // Lyrics go in 'prompt' for customMode
-                style: "pop, upbeat, catchy",  // Required for customMode
+                style: style || "pop, upbeat, catchy",  // Use user style or default
                 title: "AI Generated Song",    // Required for customMode
                 instrumental: false,
                 model: "V4",  // V4 has 4min max
