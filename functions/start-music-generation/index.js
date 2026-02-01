@@ -13,7 +13,7 @@ const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.MUSIC_WEBHOOK_URL || process.env.WEBHOOK_URL;
 
 // Constants
-const FREE_SONGS_PER_USER = 2;
+const FREE_SONGS_PER_USER = 999999; // Effectively unlimited
 
 functions.http('startMusicGeneration', async (req, res) => {
     console.log("Music Generation Triggered - v1.0");
