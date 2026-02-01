@@ -125,46 +125,51 @@ jobs:
           image: gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }}
 
       # --- Functions Deployment ---
+      # --- Functions Deployment (Direct gcloud CLI) ---
       - name: Deploy start-generation
         if: needs.check-paths.outputs.start_generation == 'true'
-        uses: google-github-actions/deploy-cloud-functions@v2
-        with:
-          gen2: true
-          name: start-generation
-          runtime: nodejs22
-          entry_point: startGeneration
-          region: ${{ env.REGION }}
-          source_dir: functions/start-generation
+        run: |
+          gcloud functions deploy start-generation \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/start-generation \
+            --entry-point=startGeneration \
+            --trigger-http \
+            --allow-unauthenticated
 
       - name: Deploy webhook-handler
         if: needs.check-paths.outputs.webhook_handler == 'true'
-        uses: google-github-actions/deploy-cloud-functions@v2
-        with:
-          gen2: true
-          name: webhook-handler
-          runtime: nodejs22
-          entry_point: handleWebhook
-          region: ${{ env.REGION }}
-          source_dir: functions/webhook-handler
+        run: |
+          gcloud functions deploy webhook-handler \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/webhook-handler \
+            --entry-point=handleWebhook \
+            --trigger-http \
+            --allow-unauthenticated
 
       - name: Deploy check-status
         if: needs.check-paths.outputs.check_status == 'true'
-        uses: google-github-actions/deploy-cloud-functions@v2
-        with:
-          gen2: true
-          name: check-status
-          runtime: nodejs22
-          entry_point: checkStatus
-          region: ${{ env.REGION }}
-          source_dir: functions/check-status
+        run: |
+          gcloud functions deploy check-status \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/check-status \
+            --entry-point=checkStatus \
+            --trigger-http \
+            --allow-unauthenticated
 
       - name: Deploy list-generations
         if: needs.check-paths.outputs.list_generations == 'true'
-        uses: google-github-actions/deploy-cloud-functions@v2
-        with:
-          gen2: true
-          name: list-generations
-          runtime: nodejs22
-          entry_point: listGenerations
-          region: ${{ env.REGION }}
-          source_dir: functions/list-generations
+        run: |
+          gcloud functions deploy list-generations \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/list-generations \
+            --entry-point=listGenerations \
+            --trigger-http \
+            --allow-unauthenticated
