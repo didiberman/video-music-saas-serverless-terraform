@@ -11,6 +11,7 @@ import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
 import { ProgressRotator } from "@/components/ProgressRotator";
+import { PublicGallery } from "@/components/PublicGallery";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -311,7 +312,12 @@ export default function Home() {
       {/* Main Content — switches between prompt form and streaming panel */}
       {phase === "idle" ? (
         <>
-          <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] relative z-10 transition-all duration-700">
+          {/* Community Gallery - above form */}
+          <div className="pt-20 relative z-10">
+            <PublicGallery />
+          </div>
+
+          <div className="w-full flex flex-col items-center justify-center py-10 min-h-[50vh] relative z-10 transition-all duration-700">
             <GlassCard className="w-full max-w-2xl p-1 shimmer-border" delay={0.2}>
               <div className="relative">
                 <textarea
