@@ -206,7 +206,7 @@ export default function LoginPage() {
                 transition={{ delay: 0.8 }}
                 className="absolute bottom-8 text-white/25 text-sm font-light tracking-wide"
             >
-                by Didi with <span className="text-pink-400/70">&#9829;</span>
+                by Didians with <span className="text-pink-400/70">&#9829;</span>
             </motion.p>
         </main>
     );
