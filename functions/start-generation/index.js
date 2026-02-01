@@ -13,7 +13,7 @@ const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.WEBHOOK_URL;
 
 functions.http('startGeneration', async (req, res) => {
-    console.log("CI/CD Verification Triggered - v1.3");
+    console.log("CI/CD Verification Triggered - v1.4");
     res.set('Access-Control-Allow-Origin', '*');
     res.set('Access-Control-Allow-Methods', 'POST');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
