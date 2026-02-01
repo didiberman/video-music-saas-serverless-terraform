@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
 import { ProgressRotator } from "@/components/ProgressRotator";
 import { PublicGallery } from "@/components/PublicGallery";
+import { CreditsBadge } from "@/components/CreditsBadge";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -294,7 +295,9 @@ export default function Home() {
           <span className="text-sm font-medium tracking-widest uppercase gradient-text">VibeFlow</span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          {user && <CreditsBadge userId={user.uid} />}
+
           <button
             onClick={() => setIsDrawerOpen(true)}
             className="p-2.5 rounded-xl hover:bg-white/5 transition-all text-white/50 hover:text-violet-300"

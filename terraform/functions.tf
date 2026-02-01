@@ -277,3 +277,123 @@ resource "google_cloud_run_service_iam_member" "public_list_generations" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+# --- PAYMENTS (STRIPE) ---
+
+# Zip Source for Create Checkout Session
+data "archive_file" "create_checkout_session_zip" {
+  type        = "zip"
+  source_dir  = "../functions/create-checkout-session"
+  output_path = "./dist/create-checkout-session.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "create_checkout_session_obj" {
+  name   = "create-checkout-session-${data.archive_file.create_checkout_session_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.create_checkout_session_zip.output_path
+}
+
+# Create Checkout Session Cloud Function
+resource "google_cloudfunctions2_function" "create_checkout_session" {
+  name        = "create-checkout-session"
+  location    = var.region
+  description = "Creates Stripe Checkout Session"
+
+  build_config {
+    runtime     = "nodejs22"
+    entry_point = "createCheckoutSession"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.create_checkout_session_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 30
+
+    environment_variables = {
+      WEBHOOK_URL = "https://${var.domain_name}/api/webhooks/payment" # Or function URL
+    }
+
+    secret_environment_variables {
+      key        = "STRIPE_SECRET_KEY"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.stripe_secret_key.secret_id
+      version    = "latest"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
+  }
+}
+
+# Allow public invocation (BUT requires auth check in code or via gateway, for now public for flexibility)
+resource "google_cloud_run_service_iam_member" "public_create_checkout_session" {
+  location = google_cloudfunctions2_function.create_checkout_session.location
+  service  = google_cloudfunctions2_function.create_checkout_session.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}
+
+# Zip Source for Payment Webhook
+data "archive_file" "payment_webhook_zip" {
+  type        = "zip"
+  source_dir  = "../functions/payment-webhook"
+  output_path = "./dist/payment-webhook.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "payment_webhook_obj" {
+  name   = "payment-webhook-${data.archive_file.payment_webhook_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.payment_webhook_zip.output_path
+}
+
+# Payment Webhook Cloud Function
+resource "google_cloudfunctions2_function" "payment_webhook" {
+  name        = "payment-webhook"
+  location    = var.region
+  description = "Handles Stripe Webhooks"
+
+  build_config {
+    runtime     = "nodejs22"
+    entry_point = "handlePaymentWebhook"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.payment_webhook_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 60
+
+    secret_environment_variables {
+      key        = "STRIPE_SECRET_KEY"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.stripe_secret_key.secret_id
+      version    = "latest"
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
+  }
+}
+
+# Allow public invocation for webhook (Stripe calls this)
+resource "google_cloud_run_service_iam_member" "public_payment_webhook" {
+  location = google_cloudfunctions2_function.payment_webhook.location
+  service  = google_cloudfunctions2_function.payment_webhook.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

@@ -1,0 +1,9 @@
+{
+    "name": "create-checkout-session",
+    "version": "1.0.0",
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.0.0",
+        "firebase-admin": "^11.0.0",
+        "stripe": "^14.0.0"
+    }
+}

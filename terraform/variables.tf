@@ -15,6 +15,12 @@ variable "domain_name" {
   default     = "vibeflow.video"
 }
 
+variable "stripe_secret_key" {
+  description = "Stripe Secret Key for payment processing"
+  type        = string
+  sensitive   = true
+}
+
 variable "legacy_domain_name" {
   description = "Previous domain name to redirect from"
   type        = string
