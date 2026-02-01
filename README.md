@@ -291,4 +291,25 @@ Returns user's generation history (requires auth).
 
 ## License
 
-Private repository.
+
+## Cost Estimation
+
+This architecture is designed to stay within **Google Cloud Free Tier** limits for development and moderate usage.
+
+| Service | Free Tier / Allocation | Estimated Cost (Low Usage) |
+|---------|------------------------|----------------------------|
+| **Cloud Run** (Frontend) | 2M requests/mo, 360k GB-sec memory | **$0.00** |
+| **Cloud Functions** (Backend) | 2M invocations/mo, 400k GB-sec comp | **$0.00** |
+| **Firestore** | 1GB storage, 50k reads/day | **$0.00** |
+| **Secret Manager** | 6 active secrets (using 1) | **$0.00** |
+| **Artifact Registry** | 0.5GB free storage | **$0.00 - $0.10** |
+| **Cloud Build** | 120 build-minutes/day | **$0.00** |
+| **Cloud Networking** | 5GB egress/mo (standard tier) | **$0.00** |
+
+**Total Estimated Infrastructure Cost: ~$0.00 / month**
+
+> **Note:** The KIE AI API is an external paid service and generates costs per video created:
+> *   **6-second video:** 20 credits ($0.10)
+> *   **10-second video:** 30 credits ($0.15)
+> **Note:** Storing many generated video URLs in Firestore is free (text), but if you choose to download/store video files to Cloud Storage later, standard storage rates apply ($0.02/GB).
+
