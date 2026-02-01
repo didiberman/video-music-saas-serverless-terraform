@@ -4,329 +4,171 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         User Browser                            │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │ Voice Input  │───▶│  Text Prompt │───▶│   Generate   │      │
-│  │ (Speech API) │    │              │    │    Button    │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Next.js Frontend (Cloud Run)                 │
-│                                                                 │
-│  /api/generate ──────▶ Proxies to Video Function               │
-│  /api/generate-music ▶ Proxies to Music Function               │
-│  /api/status/[id] ───▶ Polls video completion status           │
-│  /api/generations ───▶ Lists user's history                    │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│       Cloud Functions (Gen 2 - Node.js 22)                      │
-│                                                                 │
-│  [start-generation]        [start-music-generation]             │
-│   Video Logic               Music Logic                         │
-│   (Gemini + KIE Video)      (Gemini Lyrics + KIE Suno)          │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    KIE AI (External Service)                    │
-│                                                                 │
-│  Generates video asynchronously (30-60 seconds)                 │
-│  Calls webhook when complete                                    │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│              webhook-handler (Cloud Function)                   │
-│                                                                 │
-│  1. Receive callback from KIE AI                                │
-│  2. Extract video URL from response                             │
-│  3. Update Firestore document with video_url + status           │
-└─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                        Firestore                                │
-│                                                                 │
-│  credits/{uid}        ──▶ User's remaining seconds              │
-│  generations/{taskId} ──▶ Video generation records              │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    User[User Browser] -->|Voice/Text Input| NextJS[Next.js Frontend (Cloud Run)]
+    
+    subgraph "Frontend Services"
+        NextJS -->|/api/generate| StartGen[start-generation]
+        NextJS -->|/api/generate-music| StartMusic[start-music-generation]
+        NextJS -->|/api/checkout| CreateCheckout[create-checkout-session]
+        NextJS -->|/api/transactions| ListTx[list-transactions]
+        NextJS -->|/api/status| CheckStatus[check-status]
+    end
+
+    subgraph "Backend (Cloud Functions)"
+        StartGen -->|Gen Script| VertexAI[Vertex AI (Gemini)]
+        StartGen -->|Gen Video| KIE[KIE AI (Video)]
+        StartMusic -->|Gen Lyrics| VertexAI
+        StartMusic -->|Gen Music| KIE_Suno[KIE AI (Suno)]
+        
+        CreateCheckout -->|Create Session| Stripe[Stripe API]
+        
+        Stripe -->|Webhook| PaymentHook[payment-webhook]
+    end
+
+    subgraph "Data & Storage"
+        Firestore[(Firestore)]
+        SecretMgr[Secret Manager]
+    end
+
+    PaymentHook -->|Update Credits| Firestore
+    StartGen -->|Deduct Credits| Firestore
+    StartMusic -->|Deduct Credits| Firestore
+    
+    KIE -->|Webhook| WebhookHandler[webhook-handler]
+    KIE_Suno -->|Webhook| WebhookHandler
+    WebhookHandler -->|Update Status| Firestore
 ```
 
 ## Features
 
-### Video Generation 🎥
-- **Google OAuth** login via Firebase Authentication
-- **Voice input** — speak your video idea using browser Speech Recognition API
-- **Streaming script generation** — watch the AI script appear in real-time via NDJSON streaming
-- **Async video generation** via KIE AI with webhook-based completion
-- **Duration selection** — choose 6s or 10s videos
-- **Aspect ratio selection** — Portrait (9:16) or Landscape (16:9)
-- **Credit system** — 30 free seconds per account
+### AI Generation ✨
+- **Text-to-Video** — Describe a scene, choose style/duration, and get a video in ~60s.
+- **Text-to-Music** — Describe a vibe, get a unique song with AI-written lyrics in ~60s.
+- **Voice Input** — Speak your ideas directly using browser Speech API.
+- **Streaming Scripts** — Watch the AI write your video script or song lyrics in real-time.
 
-### Music Generation 🎵
-- **AI lyrics** — Gemini generates lyrics from your prompt
-- **Suno AI music** — KIE Suno API (model V4_5PLUS) creates ~1 minute songs
-- **Audio player** — listen to completed songs with cover art and waveform
-- **2 free songs** per user (separate from video credits)
+### Monetization & Credits 💎
+- **Unified Credit System** — One currency for both video and music.
+    - **1 Video Second** = 1 Credit
+    - **1 Song** = 10 Credits
+- **Stripe Integration** — Secure payments for credit packs.
+- **Pricing Page** — Transparent pricing tiers (Starter, Creator, Pro).
+- **Billing History** — Detailed "Invoice" view showing all payments and exact credit usage per generation.
+- **Free Trial** — New users get **30 Credits** free (3 videos or 3 songs).
 
-### UI/UX
-- **Public Feed** — Community gallery visible on landing page
-- **Video/Music toggle** — seamless switch between generation modes
-- **Video Vault** — slide-out drawer to browse your generated content
-- **Glassmorphism UI** — sleek dark theme with ambient animations
-- **Mobile Optimized** — responsive layout that works perfectly on phones
+### UI/UX 🎨
+- **Glassmorphism Design** — Premium, dark-themed UI with ambient animations.
+- **Video Vault** — Slide-out drawer to manage your creation history.
+- **Public Gallery** — Browse community creations without logging in.
+- **Responsive** — Fully optimized for mobile and desktop.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Next.js 15, React 19, TypeScript, Tailwind CSS 4 |
-| Backend | Google Cloud Functions Gen 2 (Node.js 22) |
-| Database | Google Firestore (Optimized with limits & indexes) |
-| Auth | Firebase Authentication (Google OAuth) + Persistence |
-| AI | Google Vertex AI (Gemini Flash), KIE AI (Video + Suno) |
-| Hosting | Google Cloud Run (Frontend) |
-| Infrastructure | Terraform |
-| CI/CD | GitHub Actions (OIDC federation) |
+| **Frontend** | Next.js 15, React 19, TypeScript, Tailwind CSS 4 |
+| **Backend** | Google Cloud Functions Gen 2 (Node.js 22) |
+| **Database** | Google Firestore (NoSQL) |
+| **Payments** | Stripe (w/ Webhooks & Checkout sessions) |
+| **AI Models** | Google Gemini 1.5 Flash (Script/Lyrics), KIE AI (Video/Suno) |
+| **Infra** | Terraform (IaC), Google Secret Manager |
+| **CI/CD** | GitHub Actions (OIDC Federation, Path Filtering) |
 
 ## Project Structure
 
 ```
 .
 ├── app/                          # Next.js App Router
-│   ├── layout.tsx                # Root layout (VibeFlow)
-│   ├── page.tsx                  # Main dashboard with generation UI
+│   ├── pricing/page.tsx          # Pricing & Plans page
 │   ├── login/page.tsx            # Login with Public Gallery
-│   ├── globals.css               # Tailwind + glassmorphism styles
-│   └── api/
-│       ├── generate/route.ts     # Video generation proxy
-│       ├── generate-music/route.ts # Music generation proxy
-│       ├── status/[taskId]/route.ts  # Poll video completion status
-│       └── gallery/route.ts      # Public feed endpoint
+│   ├── page.tsx                  # Main generation dashboard
+│   └── api/                      # API Proxies
 ├── components/
-│   ├── PublicGallery.tsx         # Community feed (lazy loaded)
-│   ├── VideoGallery.tsx          # User vault (video + audio support)
-│   └── StreamingText.tsx         # Markdown renderer with typing cursor
-├── lib/
-│   └── firebase/client.ts        # Firebase SDK initialization
-├── types/
-│   └── speech.d.ts               # TypeScript declarations for Web Speech API
-├── functions/
-│   ├── start-generation/         # Video generation logic
-│   │   ├── index.js              # Validates auth, streams Gemini, calls KIE
-│   │   └── package.json
-│   ├── webhook-handler/          # KIE AI callback handler
-│   │   ├── index.js              # Updates Firestore with video URL
-│   │   └── package.json
-│   ├── check-status/             # Status poller
-│   │   ├── index.js
-│   │   └── package.json
-│   ├── list-generations/         # History fetcher
-│   │   ├── index.js
-│   │   └── package.json
-│   └── start-music-generation/   # Music generation logic
-│       ├── index.js              # Gemini lyrics + KIE Suno API
-│       └── package.json
+│   ├── PricingCards.tsx          # Reusable pricing UI
+│   ├── TransactionHistory.tsx    # Billing & Usage history
+│   ├── CreditsModal.tsx          # Purchase & History modal
+│   ├── CreditsBadge.tsx          # Header credit balance
+│   ├── VideoGallery.tsx          # User vault
+│   └── ...
+├── functions/                    # Google Cloud Functions
+│   ├── start-generation/         # Video logic (Gemini + KIE)
+│   ├── start-music-generation/   # Music logic (Gemini + Suno)
+│   ├── create-checkout-session/  # Stripe Checkout init
+│   ├── payment-webhook/          # Stripe Webhook handler
+│   ├── list-transactions/        # Billing history fetcher
+│   ├── check-status/             # Status polling
+│   ├── list-generations/         # User history
+│   └── webhook-handler/          # KIE AI callback handler
 ├── terraform/                    # Infrastructure as Code
-│   ├── main.tf                   # Provider config, API enablement
-│   ├── frontend.tf               # Cloud Run service
-│   ├── functions.tf              # Cloud Functions deployment
-│   ├── firestore.tf              # Database + security rules + indexes
-│   ├── oidc.tf                   # GitHub Actions OIDC federation
-│   └── variables.tf              # Input variables
-├── .github/workflows/            # CI/CD pipelines
-│   └── deploy.yml                # CI/CD pipeline (frontend only)
-├── Dockerfile                    # Multi-stage build (node:20-alpine)
-└── public/
-    └── favicon.svg               # Gradient play button icon
+│   ├── main.tf, functions.tf     # Core infra definitions
+│   ├── secrets.tf                # Secret Manager config
+│   └── ...
+└── .github/workflows/            # CI/CD
+    └── deploy.yml                # Smart deployment pipeline
 ```
-
-## User Flow
-
-1.  **Sign in** with Google on `/login`
-2.  **Enter prompt** by typing or using voice input (microphone button)
-3.  **Select options** — duration (6s/10s) and aspect ratio (9:16/16:9)
-4.  **Click Generate** — request sent to `/api/generate`
-5.  **Watch script stream** — Gemini's response appears character by character
-6.  **Wait for video** — UI shows "Generating video... Usually takes 30-60 seconds"
-7.  **Video appears** — webhook updates Firestore, polling detects completion
-8.  **Browse Vault** — view all past generations in the slide-out drawer
 
 ## Data Model (Firestore)
 
-### `credits` collection
+### `credits` bucket
+Tracks user balance.
+- `seconds_remaining` (number): Unified credit balance (legacy name).
+- `is_pro` (boolean): True if user has made a purchase.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `seconds_remaining` | number | Available credits (default: 30) |
-| `updated_at` | timestamp | Last modification time |
+### `transactions` bucket
+Immutable record of payments.
+- `uid` (string): User ID.
+- `amount` (number): Amount in cents.
+- `credits` (number): Credits purchased.
+- `packId` (string): 'starter', 'creator', etc.
+- `status` (string): 'completed'.
 
-Document ID = Firebase UID
-
-### `generations` collection
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `user_id` | string | Firebase UID |
-| `original_prompt` | string | User's input text |
-| `generated_script` | string | Gemini-enhanced script |
-| `status` | string | `waiting` / `success` / `fail` |
-| `kie_task_id` | string | KIE AI task ID |
-| `video_url` | string | Final video URL (set by webhook) |
-| `fail_message` | string | Error message if failed |
-| `created_at` | timestamp | Creation time |
-| `updated_at` | timestamp | Last update time |
-
-Document ID = KIE AI task ID
-
-**Composite Index:** `user_id` ASC + `created_at` DESC (for Vault queries)
-
-### `music_credits` collection
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `songs_remaining` | number | Available music credits (default: 2) |
-| `updated_at` | timestamp | Last modification time |
-
-Document ID = Firebase UID
+### `generations` bucket
+Record of all AI jobs.
+- `original_prompt` (string): Input prompt.
+- `type` (string): 'video' (default) or 'music'.
+- `cost` (number): Credits deducted for this job.
+- `status` (string): 'waiting', 'success', 'error'.
+- `video_url` / `audio_url`: Result links.
 
 ## Getting Started
 
 ### Prerequisites
+- Node.js 22+
+- Google Cloud Project (Billing Enabled)
+- Stripe Account (for payments)
+- KIE AI Account (for generation)
 
-- Node.js 20+
-- Google Cloud project with Firestore, Cloud Functions, Cloud Run enabled
-- Firebase project with Google OAuth enabled
-- KIE AI API key
-- Terraform 1.5+
-
-### Local Development
-
-1.  **Install dependencies:**
+### Environment Setup
+1.  **Clone & Install**:
     ```bash
     npm install
+    # Install function dependencies
+    cd functions/start-generation && npm install && cd ../..
+    # ... repeat for all functions
     ```
 
-2.  **Create `.env.local`:**
+2.  **Configure Vars**:
+    Create `.env.local` for frontend:
     ```env
-    NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-    NEXT_PUBLIC_API_URL=https://your-start-generation-function-url
+    NEXT_PUBLIC_FIREBASE_API_KEY=...
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
     ```
 
-3.  **Run dev server:**
-    ```bash
-    npm run dev
-    ```
-
-### Cloud Functions
-
-Each function has its own directory under `functions/`:
-
-```bash
-cd functions/start-generation && npm install
-cd functions/webhook-handler && npm install
-cd functions/check-status && npm install
-cd functions/list-generations && npm install
-```
-
-**Environment variables for `start-generation`:**
-
-| Variable | Description |
-|----------|-------------|
-| `KIE_API_KEY` | KIE AI API key |
-| `WEBHOOK_URL` | URL of webhook-handler function |
-
-## Deployment
-
-### Infrastructure (Terraform)
+### Terraform Deployment
+Infrastructure is fully managed via Terraform.
 
 ```bash
 cd terraform
 terraform init
-terraform plan
 terraform apply
 ```
+This will provision:
+- ALL Cloud Functions (from local source)
+- Firestore Database & Indexes
+- Secret Manager secrets (Stripe Key, KIE Key)
+- Cloud Run service (Frontend)
 
-Terraform manages:
-- Cloud Run service for frontend
-- Cloud Functions (all 4)
-- Firestore database + security rules + indexes
-- GitHub Actions OIDC federation
-- Service accounts and IAM
-
-### CI/CD (GitHub Actions)
-
-### CI/CD (GitHub Actions)
-
-Pushes to `main` or `master` trigger a smart, automated deployment pipeline.
-The workflow uses **Path Filtering** to only deploy components that have changed:
-
--   **Frontend (Cloud Run)**:
-    -   Triggers if changes detected in `app/`, `components/`, `lib/`, `public/`, etc.
-    -   Builds Docker image and deploys to Cloud Run.
-
--   **Cloud Functions**:
-    -   Each function (`start-generation`, `webhook-handler`, etc.) is tracked independently.
-    -   Deploys *only* if files in its specific `functions/<name>` directory change.
-    -   Deploys directly to Google Cloud Functions (Gen 2) using Node.js 22.
-
-All deployments use **OIDC federation** for passwordless, secure authentication with Google Cloud.
-
-## Security
-
-- Firebase ID tokens verified server-side on every request
-- Credit deduction enforced server-side
-- Firestore security rules restrict reads to own data only
-- Cloud Functions use default service account (same project)
-- Docker container runs as non-root user
-- CI/CD uses OIDC federated identity (no long-lived credentials)
-
-## API Endpoints
-
-### POST `/api/generate`
-Starts video generation. Returns NDJSON stream.
-
-### POST `/api/generate-music`
-Starts music generation. Returns NDJSON stream.
-
-### GET `/api/status/[taskId]`
-Polls completion status.
-
-### GET `/api/generations`
-Returns user's generation history (requires auth).
-
-### GET `/api/gallery`
-Public feed of recent successful generations.
-
-## License
-
-
-## Cost Estimation
-
-This architecture is designed to stay within **Google Cloud Free Tier** limits for development and moderate usage.
-
-| Service | Free Tier / Allocation | Estimated Cost (Low Usage) |
-|---------|------------------------|----------------------------|
-| **Cloud Run** (Frontend) | 2M requests/mo, 360k GB-sec memory | **$0.00** |
-| **Cloud Functions** (Backend) | 2M invocations/mo, 400k GB-sec comp | **$0.00** |
-| **Firestore** | 1GB storage, 50k reads/day | **$0.00** |
-| **Secret Manager** | 6 active secrets (using 1) | **$0.00** |
-| **Artifact Registry** | 0.5GB free storage | **$0.00 - $0.10** |
-| **Cloud Build** | 120 build-minutes/day | **$0.00** |
-| **Cloud Networking** | 5GB egress/mo (standard tier) | **$0.00** |
-
-**Total Estimated Infrastructure Cost: ~$0.00 / month**
-
-> **Note:** The KIE AI API is an external paid service and generates costs per video created:
-> *   **6-second video:** 20 credits ($0.10)
-> *   **10-second video:** 30 credits ($0.15)
-> **Note:** Storing many generated video URLs in Firestore is free (text), but if you choose to download/store video files to Cloud Storage later, standard storage rates apply ($0.02/GB).
-
+---
+*made by didi with ❤️*
