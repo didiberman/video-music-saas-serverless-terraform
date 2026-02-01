@@ -50,11 +50,11 @@ functions.http('startMusicGeneration', async (req, res) => {
         }
 
         const uid = decodedToken.uid;
-        const userEmail = decodedToken.email || '';
 
-        // Admin bypass - unlimited for admin
-        const ADMIN_EMAIL = 'yadidb@gmail.com';
-        const isAdmin = userEmail === ADMIN_EMAIL;
+        // Check if user is admin (has high video credits = >10000 seconds)
+        const videoCreditsDoc = await db.collection('credits').doc(uid).get();
+        const videoSeconds = videoCreditsDoc.exists ? videoCreditsDoc.data().seconds_remaining : 0;
+        const isAdmin = videoSeconds > 10000;
 
         // 2. Parse Body
         const { prompt } = req.body;
