@@ -59,13 +59,13 @@ functions.http('startGeneration', async (req, res) => {
         const creditsRef = db.collection('credits').doc(uid);
         const creditsDoc = await creditsRef.get();
 
-        // Default to 70s if no doc exists yet
-        let secondsRemaining = 70;
+        // Default to 30s if no doc exists yet
+        let secondsRemaining = 30;
         if (creditsDoc.exists) {
             secondsRemaining = creditsDoc.data().seconds_remaining;
         } else {
             // Initialize user
-            await creditsRef.set({ seconds_remaining: 70, updated_at: new Date() });
+            await creditsRef.set({ seconds_remaining: 30, updated_at: new Date() });
         }
 
         if (secondsRemaining <= 0) {

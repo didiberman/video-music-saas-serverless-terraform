@@ -67,7 +67,7 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 - **Async video generation** via KIE AI with webhook-based completion
 - **Duration selection** — choose 6s or 10s videos
 - **Aspect ratio selection** — Portrait (9:16) or Landscape (16:9)
-- **Credit system** — 70 free seconds per account
+- **Credit system** — 30 free seconds per account
 
 ### Music Generation 🎵
 - **AI lyrics** — Gemini generates lyrics from your prompt
@@ -164,7 +164,7 @@ A minimalist AI-powered video and music generation platform. Users describe a vi
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `seconds_remaining` | number | Available credits (default: 70) |
+| `seconds_remaining` | number | Available credits (default: 30) |
 | `updated_at` | timestamp | Last modification time |
 
 Document ID = Firebase UID
