@@ -37,18 +37,37 @@ functions.http('adminStats', async (req, res) => {
             return res.status(403).json({ error: 'Access Denied: Admin only' });
         }
 
-        // 2. Fetch Recent Signups (Auth)
-        // List last 20 users
-        const listUsersResult = await admin.auth().listUsers(20);
-        // Note: listUsers returns in random order or ID order, not necessarily creation time unless paged.
-        // Actually, listUsers() lists essentially by UID.
-        // We will sort them in memory by metadata.creationTime
-        const users = listUsersResult.users.map(u => ({
+        // 2. Fetch Users (Auth) + Credit Stats
+        // List last 100 users
+        const listUsersResult = await admin.auth().listUsers(100);
+
+        const authUsers = listUsersResult.users.map(u => ({
             uid: u.uid,
             email: u.email,
             created_at: u.metadata.creationTime,
             photoURL: u.photoURL
         })).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        // Fetch Credit Docs for all users in parallel
+        // Firestore limits getAll to a reasonable number, but 100 is fine.
+        const creditRefs = authUsers.map(u => db.collection('credits').doc(u.uid));
+
+        let users = [];
+        if (creditRefs.length > 0) {
+            const creditsSnap = await db.getAll(...creditRefs);
+
+            users = authUsers.map((u, index) => {
+                const creditDoc = creditsSnap[index];
+                const data = creditDoc.exists ? creditDoc.data() : {};
+                return {
+                    ...u,
+                    credits: data.seconds_remaining ?? 0, // 0 usually implies new user default (30) not yet init
+                    generation_count: data.generation_count || 0
+                };
+            });
+        } else {
+            users = authUsers.map(u => ({ ...u, credits: 0, generation_count: 0 }));
+        }
 
         // 3. Fetch Recent Generations
         const gensSnap = await db.collection('generations')
@@ -75,7 +94,7 @@ functions.http('adminStats', async (req, res) => {
         }));
 
         return res.status(200).json({
-            users: users.slice(0, 20), // Top 20 recent
+            users: users.slice(0, 100),
             generations,
             transactions
         });

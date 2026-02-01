@@ -151,9 +151,10 @@ functions.http('startGeneration', async (req, res) => {
             created_at: new Date()
         });
 
-        // 9. Deduct Credits
+        // 9. Deduct Credits & Increment Generation Count
         await creditsRef.update({
             seconds_remaining: secondsRemaining - creditCost,
+            generation_count: admin.firestore.FieldValue.increment(1),
             updated_at: new Date()
         });
 

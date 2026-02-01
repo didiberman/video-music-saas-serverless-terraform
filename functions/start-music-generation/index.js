@@ -169,10 +169,17 @@ Return ONLY the lyrics text, no labels, no remarks.`;
             created_at: new Date()
         });
 
-        // 9. Deduct Credits
+        // 9. Deduct Credits & Increment Generation Count
         if (!isAdmin) {
             await creditsRef.update({
                 seconds_remaining: creditsRemaining - SONG_COST,
+                generation_count: admin.firestore.FieldValue.increment(1),
+                updated_at: new Date()
+            });
+        } else {
+            // Just increment count for admins
+            await creditsRef.update({
+                generation_count: admin.firestore.FieldValue.increment(1),
                 updated_at: new Date()
             });
         }

@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^8.2.0",
     "@supabase/ssr": "^0.8.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
