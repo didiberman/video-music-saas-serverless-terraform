@@ -357,21 +357,34 @@ export default function Home() {
                 >
                   <span>Generate</span>
                   <Sparkles className="w-4 h-4" />
-                  <span className="text-sm font-medium text-white/40">
-                    {phase === "scripting" && "Writing script"}
-                    {phase === "generating" && (
-                      <span className="inline-flex items-center">
-                        Generating video
-                        <span className="inline-flex ml-1">
-                          <span className="animate-[pulse_1s_ease-in-out_infinite]">.</span>
-                          <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">.</span>
-                          <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">.</span>
-                        </span>
+                </button>
+              </div>
+            </div>
+          </GlassCard>
+          <VideoGallery userId={user.uid} />
+        </>
+      ) : (
+        /* Streaming / Progress Panel */
+        <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0}>
+          <div className="p-6 space-y-4">
+            {/* Phase indicator */}
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white/40">
+                  {phase === "scripting" && "Writing script"}
+                  {phase === "generating" && (
+                    <span className="inline-flex items-center">
+                      Generating video
+                      <span className="inline-flex ml-1">
+                        <span className="animate-[pulse_1s_ease-in-out_infinite]">.</span>
+                        <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">.</span>
+                        <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">.</span>
                       </span>
-                    )}
-                    {phase === "done" && "Video ready"}
-                    {phase === "error" && "Something went wrong"}
-                  </span>
+                    </span>
+                  )}
+                  {phase === "done" && "Video ready"}
+                  {phase === "error" && "Something went wrong"}
+                </span>
               </div>
               {phase === "generating" && (
                 <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
@@ -419,14 +432,8 @@ export default function Home() {
                 <span>Create another</span>
               </button>
             )}
-          </GlassCard>
-          <VideoGallery userId={user.uid} />
-        </>
-      ) : (
-        // This is where the streaming panel would go if phase is not "idle"
-        // For now, it's empty, so the ternary operator effectively ends here.
-        // If there was a component for other phases, it would be rendered here.
-        null
+          </div>
+        </GlassCard>
       )}
 
       {/* Footer Text */}
