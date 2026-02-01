@@ -10,6 +10,7 @@ import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
+import { ProgressRotator } from "@/components/ProgressRotator";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -379,27 +380,24 @@ export default function Home() {
           <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0}>
             <div className="p-6 space-y-4">
               {/* Phase indicator */}
-              <div className="flex flex-col gap-1">
+              {/* Phase indicator */}
+              <div className="flex flex-col gap-2 items-center w-full">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-white/40">
-                    {phase === "scripting" && "Writing script"}
-                    {phase === "generating" && (
-                      <span className="inline-flex items-center">
-                        Generating video
-                        <span className="inline-flex ml-1">
-                          <span className="animate-[pulse_1s_ease-in-out_infinite]">.</span>
-                          <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">.</span>
-                          <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">.</span>
-                        </span>
-                      </span>
-                    )}
-                    {phase === "done" && "Video ready"}
-                    {phase === "error" && "Something went wrong"}
-                  </span>
+                  {phase === "generating" ? (
+                    <div className="w-full flex flex-col items-center gap-3">
+                      <div className="w-full max-w-[280px]">
+                        <ProgressRotator />
+                      </div>
+                      <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
+                    </div>
+                  ) : (
+                    <span className="text-sm font-medium text-white/40">
+                      {phase === "scripting" && "Writing script..."}
+                      {phase === "done" && "Video ready"}
+                      {phase === "error" && "Something went wrong"}
+                    </span>
+                  )}
                 </div>
-                {phase === "generating" && (
-                  <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
-                )}
               </div>
 
               {/* Streamed script display */}
