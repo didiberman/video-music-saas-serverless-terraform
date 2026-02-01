@@ -58,6 +58,7 @@ export default function Home() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioUrl2, setAudioUrl2] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Voice input state
@@ -533,7 +534,7 @@ export default function Home() {
                         </div>
                       </div>
                       <audio
-                        src={url}
+                        src={url || ""}
                         controls
                         className="w-full"
                       />
