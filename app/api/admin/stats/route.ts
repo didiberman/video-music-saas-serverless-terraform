@@ -6,7 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 // Hardcoded admin emails (add yours here)
 const ADMIN_EMAILS = [
-    "yadid@example.com", // Replace with your actual admin email
+    "yadidb@gmail.com", // Replace with your actual admin email
 ];
 
 interface UserStats {
