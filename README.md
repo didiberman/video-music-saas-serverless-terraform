@@ -241,14 +241,21 @@ Terraform manages:
 
 ### CI/CD (GitHub Actions)
 
-Pushes to `main` or `master` trigger automatic frontend deployment:
+### CI/CD (GitHub Actions)
 
-1. Authenticates to GCP via OIDC (no stored secrets)
-2. Builds Docker image with Firebase config as build args
-3. Pushes to Google Container Registry
-4. Deploys to Cloud Run
+Pushes to `main` or `master` trigger a smart, automated deployment pipeline.
+The workflow uses **Path Filtering** to only deploy components that have changed:
 
-Cloud Functions are deployed via `terraform apply` (not CI/CD).
+- **Frontend (Cloud Run)**:
+  - Triggers if changes detected in `app/`, `components/`, `lib/`, `public/`, etc.
+  - Builds Docker image and deploys to Cloud Run.
+
+- **Cloud Functions**:
+  - Each function (`start-generation`, `webhook-handler`, etc.) is tracked independently.
+  - Deploys *only* if files in its specific `functions/<name>` directory change.
+  - Deploys directly to Google Cloud Functions (Gen 2) using Node.js 22.
+
+All deployments use **OIDC federation** for passwordless, secure authentication with Google Cloud.
 
 ## Security
 
