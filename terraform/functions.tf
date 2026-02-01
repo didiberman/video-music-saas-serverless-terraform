@@ -447,3 +447,53 @@ resource "google_cloud_run_service_iam_member" "public_list_transactions" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+# Zip Source for Admin Stats
+data "archive_file" "admin_stats_zip" {
+  type        = "zip"
+  source_dir  = "../functions/admin-stats"
+  output_path = "./dist/admin-stats.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "admin_stats_obj" {
+  name   = "admin-stats-${data.archive_file.admin_stats_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.admin_stats_zip.output_path
+}
+
+# Admin Stats Cloud Function
+resource "google_cloudfunctions2_function" "admin_stats" {
+  name        = "admin-stats"
+  location    = var.region
+  description = "Aggregated stats for admin dashboard"
+
+  build_config {
+    runtime     = "nodejs22"
+    entry_point = "adminStats"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.admin_stats_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 5
+    available_memory   = "256M"
+    timeout_seconds    = 30
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
+  }
+}
+
+# Allow public invocation (Auth handled in code)
+resource "google_cloud_run_service_iam_member" "public_admin_stats" {
+  location = google_cloudfunctions2_function.admin_stats.location
+  service  = google_cloudfunctions2_function.admin_stats.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

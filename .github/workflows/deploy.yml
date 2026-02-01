@@ -24,6 +24,7 @@ jobs:
       check_status: ${{ steps.changes.outputs.check_status }}
       list_generations: ${{ steps.changes.outputs.list_generations }}
       list_transactions: ${{ steps.changes.outputs.list_transactions }}
+      admin_stats: ${{ steps.changes.outputs.admin_stats }}
       create_checkout_session: ${{ steps.changes.outputs.create_checkout_session }}
       payment_webhook: ${{ steps.changes.outputs.payment_webhook }}
     permissions:
@@ -61,6 +62,8 @@ jobs:
               - 'functions/list-generations/**'
             list_transactions:
               - 'functions/list-transactions/**'
+            admin_stats:
+              - 'functions/admin-stats/**'
             create_checkout_session:
               - 'functions/create-checkout-session/**'
             payment_webhook:
@@ -191,6 +194,17 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/list-transactions \
             --entry-point=listTransactions \
+            --trigger-http
+
+      - name: Deploy admin-stats
+        if: needs.check-paths.outputs.admin_stats == 'true'
+        run: |
+          gcloud functions deploy admin-stats \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/admin-stats \
+            --entry-point=adminStats \
             --trigger-http
 
       - name: Deploy start-music-generation

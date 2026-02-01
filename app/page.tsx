@@ -296,6 +296,11 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-3">
+          {user && user.email === 'yadidb@gmail.com' && (
+            <a href="/admin" className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-all">
+              Admin
+            </a>
+          )}
           {user && <CreditsBadge userId={user.uid} />}
 
           <button
