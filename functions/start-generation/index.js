@@ -1,6 +1,6 @@
 const functions = require('@google-cloud/functions-framework');
 const admin = require('firebase-admin');
-const { Firestore } = require('@google-cloud/firestore');
+const { Firestore, FieldValue } = require('@google-cloud/firestore');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Initialize Firebase Admin with default credentials (same project)
@@ -154,7 +154,7 @@ functions.http('startGeneration', async (req, res) => {
         // 9. Deduct Credits & Increment Generation Count
         await creditsRef.update({
             seconds_remaining: secondsRemaining - creditCost,
-            generation_count: admin.firestore.FieldValue.increment(1),
+            generation_count: FieldValue.increment(1),
             updated_at: new Date()
         });
 
